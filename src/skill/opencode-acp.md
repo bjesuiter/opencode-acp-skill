@@ -80,7 +80,7 @@ No response expected - this is a notification.
 
 Per OpenCode instance, track:
 - `processSessionId` - from bash tool (clawdbot's process ID)
-- `acpSessionId` - from session/new response (OpenCode's session ID)  
+- `opencodeSessionId` - from session/new response (OpenCode's session ID)  
 - `messageId` - increment for each request you send
 
 ## Polling Strategy
@@ -117,7 +117,7 @@ Per OpenCode instance, track:
    process.poll(sessionId: "bg_42") -> initialize response
 
 3. process.write(sessionId: "bg_42", data: '{"jsonrpc":"2.0","id":1,"method":"session/new","params":{"cwd":"/home/user/myproject","mcpServers":[]}}\n')
-   process.poll(sessionId: "bg_42") -> acpSessionId: "sess_xyz789"
+   process.poll(sessionId: "bg_42") -> opencodeSessionId: "sess_xyz789"
 
 4. process.write(sessionId: "bg_42", data: '{"jsonrpc":"2.0","id":2,"method":"session/prompt","params":{"sessionId":"sess_xyz789","prompt":[{"type":"text","text":"List all TypeScript files"}]}}\n')
    
@@ -127,3 +127,96 @@ Per OpenCode instance, track:
 
 6. When done: process.kill(sessionId: "bg_42")
 ```
+
+---
+
+## Named Sessions
+
+Use human-readable labels instead of cryptic session IDs.
+
+### Session Registry
+
+Store session mappings in `~/clawd-dev/opencode_sessions.json`:
+
+```json
+{
+  "sessions": {
+    "my-project": {
+      "opencodeSessionId": "ses_abc123...",
+      "processSessionId": "4f7a49d2-...",
+      "cwd": "/path/to/project",
+      "messageId": 3
+    }
+  }
+}
+```
+
+### Creating a Named Session
+
+1. Start OpenCode and create session (as above)
+2. Save to registry with a label:
+
+```json
+{
+  "opencodeSessionId": "<from session/new response>",
+  "processSessionId": "<from bash background>",
+  "cwd": "/path/to/project",
+  "messageId": 2
+}
+```
+
+### Sending to a Named Session
+
+```
+1. Read opencode_sessions.json
+2. Look up label → get session info
+3. Check if processSessionId is still valid:
+   - process.list() to see if running
+4. If not running → auto-recover:
+   - Start new OpenCode process
+   - Initialize
+   - session/load(opencodeSessionId, cwd, mcpServers)
+   - Update processSessionId in registry
+5. Send the prompt
+6. Increment messageId and save
+```
+
+### Session Load (for recovery)
+
+```json
+{"jsonrpc":"2.0","id":1,"method":"session/load","params":{"sessionId":"ses_abc123...","cwd":"/path/to/project","mcpServers":[]}}
+```
+
+**Note**: `session/load` requires `cwd` and `mcpServers` (not just sessionId).
+
+On load, OpenCode streams the full conversation history, then returns the session info.
+
+### Auto-Recovery Workflow
+
+```
+function sendToSession(label, prompt):
+    session = registry[label]
+    
+    if process.list().includes(session.processSessionId):
+        # Use existing connection
+        process.write(session.processSessionId, prompt)
+    else:
+        # Auto-recover
+        newProcess = bash("opencode acp", background: true)
+        initialize(newProcess)
+        session_load(newProcess, session.opencodeSessionId)
+        
+        session.processSessionId = newProcess.sessionId
+        save(registry)
+        
+        process.write(newProcess, prompt)
+```
+
+### Key Insight
+
+| Handle | Survives Restart? | Use For |
+|--------|-------------------|---------|
+| `processSessionId` | ❌ No | Active connections |
+| `opencodeSessionId` | ✅ Yes | Session recovery |
+
+The **opencodeSessionId is the durable handle** — store it to survive restarts!
