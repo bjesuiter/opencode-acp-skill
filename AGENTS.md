@@ -31,11 +31,22 @@ bun run scripts/download-acp-docs.bun.ts
 bunx tsc --noEmit
 ```
 
-### No Formal Test Suite
+### Running Tests
 
-This project does not have automated tests. The skill file is validated by:
-1. Manual testing with clawdbot
-2. Verifying JSON-RPC message formats match ACP spec
+This project uses manual integration tests defined as markdown files in `tests/`.
+
+**To run the test suite:**
+1. Clean all files from `playground/` folder
+2. Go into the `tests/` directory and read each `.md` file, executing them sequentially (01, 02, 03, etc.)
+
+```bash
+# Step 1: Clean playground
+rm -rf playground/*
+
+# Step 2: Execute tests in order
+# Read tests/01-create-file.md, tests/02-inspect-running-instance.md, etc.
+# and follow the instructions in each file
+```
 
 ### Linting / Formatting
 
