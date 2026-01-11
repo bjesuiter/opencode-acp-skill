@@ -1,0 +1,29 @@
+# Agents
+
+> Agents implementing the Agent Client Protocol
+
+The following agents can be used with an ACP Client:
+
+* [AgentPool](https://phil65.github.io/agentpool/advanced/acp-integration/)
+* [Augment Code](https://docs.augmentcode.com/cli/acp)
+* [Blackbox AI](https://docs.blackbox.ai/features/blackbox-cli/introduction)
+* [Claude Code](https://docs.anthropic.com/en/docs/claude-code/overview) (via [Zed's SDK adapter](https://github.com/zed-industries/claude-code-acp))
+* [Codex CLI](https://developers.openai.com/codex/cli) (via [Zed's adapter](https://github.com/zed-industries/codex-acp))
+* [Code Assistant](https://github.com/stippi/code-assistant?tab=readme-ov-file#configuration)
+* [Docker's cagent](https://github.com/docker/cagent)
+* [fast-agent](https://fast-agent.ai/acp)
+* [Gemini CLI](https://github.com/google-gemini/gemini-cli)
+* [Goose](https://block.github.io/goose/docs/guides/acp-clients)
+* [JetBrains Junie *(coming soon)*](https://www.jetbrains.com/junie/)
+* [Kimi CLI](https://github.com/MoonshotAI/kimi-cli)
+* [Mistral Vibe](https://github.com/mistralai/mistral-vibe)
+* [OpenCode](https://github.com/sst/opencode)
+* [OpenHands](https://docs.openhands.dev/openhands/usage/run-openhands/acp)
+* [Qwen Code](https://github.com/QwenLM/qwen-code)
+* [Stakpak](https://github.com/stakpak/agent?tab=readme-ov-file#agent-client-protocol-acp)
+* [VT Code](https://github.com/vinhnx/vtcode/blob/main/README.md#zed-ide-integration-agent-client-protocol)
+
+
+---
+
+> To find navigation and other pages in this documentation, fetch the llms.txt file at: https://agentclientprotocol.com/llms.txt

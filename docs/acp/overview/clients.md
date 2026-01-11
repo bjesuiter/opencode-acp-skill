@@ -1,0 +1,30 @@
+# Clients
+
+> Clients implementing the Agent Client Protocol
+
+The following clients can be used with an ACP Agent:
+
+* [Agmente](https://agmente.halliharp.com) (iOS)
+* [AionUi](https://github.com/iOfficeAI/AionUi)
+* [aizen](https://aizen.win)
+* [DeepChat](https://github.com/ThinkInAIXYZ/deepchat)
+* DuckDB
+  * through the [sidequery/duckdb-acp](https://github.com/sidequery/duckdb-acp) extension
+* Emacs via [agent-shell.el](https://github.com/xenodium/agent-shell)
+* [JetBrains](https://www.jetbrains.com/help/ai-assistant/acp.html)
+* [marimo notebook](https://github.com/marimo-team/marimo)
+* [neovim](https://neovim.io)
+  * through the [CodeCompanion](https://github.com/olimorris/codecompanion.nvim) plugin
+  * through the [yetone/avante.nvim](https://github.com/yetone/avante.nvim) plugin
+* [Obsidian](https://obsidian.md)
+  * through the [Agent Client](https://github.com/RAIT-09/obsidian-agent-client) plugin
+* [Sidequery *(coming soon)*](https://sidequery.dev)
+* [Tidewave](https://tidewave.ai/)
+* [Toad](https://www.batrachian.ai/)
+* [Web Browser with AI SDK](https://github.com/mcpc-tech/ai-elements-remix-template) (powered by [@mcpc/acp-ai-provider](https://github.com/mcpc-tech/mcpc/tree/main/packages/acp-ai-provider))
+* [Zed](https://zed.dev/docs/ai/external-agents)
+
+
+---
+
+> To find navigation and other pages in this documentation, fetch the llms.txt file at: https://agentclientprotocol.com/llms.txt
