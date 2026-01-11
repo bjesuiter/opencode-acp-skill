@@ -1,0 +1,28 @@
+{
+  "wizard": {
+    "lastRunAt": "2026-01-11T17:10:38.962Z",
+    "lastRunVersion": "2026.1.10",
+    "lastRunCommand": "configure",
+    "lastRunMode": "local"
+  },
+  "auth": {
+    "profiles": {
+      "anthropic:m3mbp": {
+        "provider": "anthropic",
+        "mode": "token"
+      }
+    }
+  },
+  "messages": {
+    "ackReactionScope": "group-mentions"
+  },
+  "gateway": {
+    "mode": "local",
+    "port": 19001,
+    "bind": "loopback",
+    "tailscale": {
+      "mode": "off",
+      "resetOnExit": false
+    }
+  }
+}

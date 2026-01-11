@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "profiles": {
+    "anthropic:m3mbp": {
+      "type": "token",
+      "provider": "anthropic",
+      "token": "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"
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "gateway": {
+    "mode": "local"
+  },
+  "messages": {
+    "ackReactionScope": "group-mentions"
+  },
+  "auth": {
+    "profiles": {
+      "anthropic:m3mbp": {
+        "provider": "anthropic",
+        "mode": "token"
+      }
+    }
+  },
+  "wizard": {
+    "lastRunAt": "2026-01-11T17:04:58.953Z",
+    "lastRunVersion": "2026.1.10",
+    "lastRunCommand": "configure",
+    "lastRunMode": "local"
+  }
+}
