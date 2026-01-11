@@ -39,4 +39,7 @@ auth-profiles.json
 # test playground (generated files)
 playground
 
+# clawdbot runtime state
+clawdbot/state
+
 

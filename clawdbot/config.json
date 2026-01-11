@@ -1,6 +1,6 @@
 {
   "wizard": {
-    "lastRunAt": "2026-01-11T17:10:38.962Z",
+    "lastRunAt": "2026-01-11T17:16:01.627Z",
     "lastRunVersion": "2026.1.10",
     "lastRunCommand": "configure",
     "lastRunMode": "local"
@@ -17,12 +17,17 @@
     "ackReactionScope": "group-mentions"
   },
   "gateway": {
-    "mode": "local",
     "port": 19001,
+    "mode": "local",
     "bind": "loopback",
     "tailscale": {
       "mode": "off",
       "resetOnExit": false
+    }
+  },
+  "skills": {
+    "install": {
+      "nodeManager": "bun"
     }
   }
 }
