@@ -1,6 +1,7 @@
 ---
-name: opencode-acp
+name: opencode-acp-control
 description: Control OpenCode directly via the Agent Client Protocol (ACP). Start sessions, send prompts, resume conversations, and manage OpenCode updates.
+metadata: {"version": "1.0.0"}
 ---
 
 # OpenCode ACP Skill
