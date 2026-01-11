@@ -5,11 +5,13 @@
   "scripts": {
     "conf": "CLAWDBOT_STATE_DIR=./clawdbot/state CLAWDBOT_CONFIG_PATH=./clawdbot/config.json bunx clawdbot --dev config",
     "gate": "CLAWDBOT_STATE_DIR=./clawdbot/state CLAWDBOT_CONFIG_PATH=./clawdbot/config.json bunx clawdbot --dev gateway",
-    "tui": "CLAWDBOT_STATE_DIR=./clawdbot/state CLAWDBOT_CONFIG_PATH=./clawdbot/config.json bunx clawdbot --dev tui"
+    "tui": "CLAWDBOT_STATE_DIR=./clawdbot/state CLAWDBOT_CONFIG_PATH=./clawdbot/config.json bunx clawdbot --dev tui",
+    "publish": "clawdhub sync --root ../clawdis/skills --all --dry-run"
   },
   "devDependencies": {
     "@types/bun": "latest",
-    "clawdbot": "^2026.1.10"
+    "clawdbot": "^2026.1.10",
+    "clawdhub": "^0.1.0"
   },
   "peerDependencies": {
     "typescript": "^5"
