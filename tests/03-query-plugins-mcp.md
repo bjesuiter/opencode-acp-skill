@@ -11,7 +11,7 @@ Verify that an existing OpenCode ACP session can be reused to query information 
 ## Prerequisites
 
 - OpenCode ACP instance already running (from Test 01)
-- ACP session already established (`acpSessionId` known)
+- ACP session already established (`opencodeSessionId` known)
 
 ## Test Steps
 
@@ -19,7 +19,7 @@ Verify that an existing OpenCode ACP session can be reused to query information 
 
 Using the existing session from Test 01:
 - `processSessionId`: `68707955-3aaa-466b-a99f-e44298559497`
-- `acpSessionId`: `ses_451cd8ae0ffegNQsh59nuM3VVy`
+- `opencodeSessionId`: `ses_451cd8ae0ffegNQsh59nuM3VVy`
 - `messageId`: `3` (incrementing from previous tests)
 
 ```json

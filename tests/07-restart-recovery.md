@@ -102,7 +102,7 @@ bash(command: "opencode acp", background: true)
 │    │       (stdin/stdout pipes)          │                 │
 │    │                                     ▼                 │
 │    └────────────────────────────► OpenCode Process         │
-│                                     └── acpSessionId:      │
+│                                     └── opencodeSessionId:      │
 │                                         ses_451a89e63ffe   │
 └─────────────────────────────────────────────────────────────┘
                            │
@@ -116,7 +116,7 @@ bash(command: "opencode acp", background: true)
 │    │                                                        │
 │    ├── 1. bash("opencode acp") → NEW processSessionId      │
 │    ├── 2. initialize                                        │
-│    └── 3. session/load(acpSessionId) → RESTORED!           │
+│    └── 3. session/load(opencodeSessionId) → RESTORED!           │
 │                                                             │
 │  ✅ Full conversation history recovered                     │
 │  ✅ Agent memory intact                                     │

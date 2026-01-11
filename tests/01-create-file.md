@@ -45,7 +45,7 @@ bash(
 ```
 
 **Expected**: Response with `sessionId`  
-**Actual**: ✅ `acpSessionId: ses_451cd8ae0ffegNQsh59nuM3VVy`
+**Actual**: ✅ `opencodeSessionId: ses_451cd8ae0ffegNQsh59nuM3VVy`
 
 ### Step 4: Send Prompt
 

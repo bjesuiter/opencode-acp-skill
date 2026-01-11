@@ -45,7 +45,7 @@ bash(
 | Step | messageId | Result |
 |------|-----------|--------|
 | Initialize | 0 | ✅ protocolVersion: 1 |
-| session/new | 1 | ✅ `acpSessionId: ses_451a89e63ffea2TQIpnDGtJBkS` |
+| session/new | 1 | ✅ `opencodeSessionId: ses_451a89e63ffea2TQIpnDGtJBkS` |
 
 ### Step 4: Send Prompt
 
@@ -76,7 +76,7 @@ playground/
 | Property | Instance 1 | Instance 2 | Instance 3 |
 |----------|------------|------------|------------|
 | **processSessionId** | `68707955-3aaa-...` | `9a4d83cb-d372-...` | `f5cb87db-0fd9-...` |
-| **acpSessionId** | `ses_451cd8ae0ffe...` | `ses_451a89e63ffe...` | `ses_451a53b20ffe...` |
+| **opencodeSessionId** | `ses_451cd8ae0ffe...` | `ses_451a89e63ffe...` | `ses_451a53b20ffe...` |
 | **Status** | Failed (30min timeout) | Running | Running |
 | **Output file** | `FIRST.md` | `02-FIRST.md` | `03-FIRST.md` |
 | **Message counter** | Started at 0 | Started at 0 | Started at 0 |

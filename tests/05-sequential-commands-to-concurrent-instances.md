@@ -10,8 +10,8 @@ Verify that multiple concurrent OpenCode instances can receive and execute comma
 
 ## Prerequisites
 
-- Instance 2 running (`processSessionId: 9a4d83cb-...`, `acpSessionId: ses_451a89e63ffe...`)
-- Instance 3 running (`processSessionId: f5cb87db-...`, `acpSessionId: ses_451a53b20ffe...`)
+- Instance 2 running (`processSessionId: 9a4d83cb-...`, `opencodeSessionId: ses_451a89e63ffe...`)
+- Instance 3 running (`processSessionId: f5cb87db-...`, `opencodeSessionId: ses_451a53b20ffe...`)
 - Both instances have already executed one prompt each (messageId 2 used)
 
 ## Test Steps
@@ -67,7 +67,7 @@ Note: Both instances use messageId 3 independently — no conflict.
 2. **Session persistence**: Instances maintain state between commands
 3. **No interference**: Commands to one instance don't affect the other
 4. **Sequential control**: Clawdbot can orchestrate multiple instances in sequence
-5. **Reliable routing**: Correct processSessionId + acpSessionId routes to correct instance
+5. **Reliable routing**: Correct processSessionId + opencodeSessionId routes to correct instance
 
 ## Potential Use Case: Parallel Workflows
 
