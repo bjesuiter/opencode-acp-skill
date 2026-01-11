@@ -12,6 +12,9 @@ Control OpenCode directly via the Agent Client Protocol (ACP).
 | Send message | `process.write(sessionId, data: "<json-rpc>\n")` |
 | Read response | `process.poll(sessionId)` - repeat every 2 seconds |
 | Stop OpenCode | `process.kill(sessionId)` |
+| List sessions | `bash(command: "opencode session list", workdir: "...")` |
+| Resume session | List sessions → ask user → `session/load` |
+| Check version | `bash(command: "opencode --version")` |
 
 ## Starting OpenCode
 
@@ -130,93 +133,177 @@ Per OpenCode instance, track:
 
 ---
 
-## Named Sessions
+## Resume Session
 
-Use human-readable labels instead of cryptic session IDs.
+Resume a previous OpenCode session by letting the user choose from available sessions.
 
-### Session Registry
-
-Store session mappings in `~/clawd-dev/opencode_sessions.json`:
-
-```json
-{
-  "sessions": {
-    "my-project": {
-      "opencodeSessionId": "ses_abc123...",
-      "processSessionId": "4f7a49d2-...",
-      "cwd": "/path/to/project",
-      "messageId": 3
-    }
-  }
-}
-```
-
-### Creating a Named Session
-
-1. Start OpenCode and create session (as above)
-2. Save to registry with a label:
-
-```json
-{
-  "opencodeSessionId": "<from session/new response>",
-  "processSessionId": "<from bash background>",
-  "cwd": "/path/to/project",
-  "messageId": 2
-}
-```
-
-### Sending to a Named Session
+### Step 1: List Available Sessions
 
 ```
-1. Read opencode_sessions.json
-2. Look up label → get session info
-3. Check if processSessionId is still valid:
-   - process.list() to see if running
-4. If not running → auto-recover:
-   - Start new OpenCode process
-   - Initialize
-   - session/load(opencodeSessionId, cwd, mcpServers)
-   - Update processSessionId in registry
-5. Send the prompt
-6. Increment messageId and save
+bash(command: "opencode session list", workdir: "/path/to/project")
 ```
 
-### Session Load (for recovery)
-
-```json
-{"jsonrpc":"2.0","id":1,"method":"session/load","params":{"sessionId":"ses_abc123...","cwd":"/path/to/project","mcpServers":[]}}
+Example output:
+```
+ID                                  Updated              Messages
+ses_451cd8ae0ffegNQsh59nuM3VVy      2026-01-11 15:30     12
+ses_451a89e63ffea2TQIpnDGtJBkS      2026-01-10 09:15     5
+ses_4518e90d0ffeJIpOFI3t3Jd23Q      2026-01-09 14:22     8
 ```
 
-**Note**: `session/load` requires `cwd` and `mcpServers` (not just sessionId).
+### Step 2: Ask User to Choose
 
-On load, OpenCode streams the full conversation history, then returns the session info.
-
-### Auto-Recovery Workflow
+Present the list to the user and ask which session to resume:
 
 ```
-function sendToSession(label, prompt):
-    session = registry[label]
+"Which session would you like to resume?
+ 
+1. ses_451cd8ae... (12 messages, updated 2026-01-11)
+2. ses_451a89e6... (5 messages, updated 2026-01-10)
+3. ses_4518e90d... (8 messages, updated 2026-01-09)
+
+Enter session number or ID:"
+```
+
+### Step 3: Load Selected Session
+
+Once user responds (e.g., "1", "the first one", or "ses_451cd8ae..."):
+
+1. **Start OpenCode ACP**:
+   ```
+   bash(command: "opencode acp", background: true, workdir: "/path/to/project")
+   ```
+
+2. **Initialize**:
+   ```json
+   {"jsonrpc":"2.0","id":0,"method":"initialize","params":{...}}
+   ```
+
+3. **Load the session**:
+   ```json
+   {"jsonrpc":"2.0","id":1,"method":"session/load","params":{"sessionId":"ses_451cd8ae0ffegNQsh59nuM3VVy","cwd":"/path/to/project","mcpServers":[]}}
+   ```
+
+**Note**: `session/load` requires `cwd` and `mcpServers` parameters.
+
+On load, OpenCode streams the full conversation history back to you.
+
+### Resume Workflow Summary
+
+```
+function resumeSession(workdir):
+    # List available sessions
+    output = bash("opencode session list", workdir: workdir)
+    sessions = parseSessionList(output)
     
-    if process.list().includes(session.processSessionId):
-        # Use existing connection
-        process.write(session.processSessionId, prompt)
-    else:
-        # Auto-recover
-        newProcess = bash("opencode acp", background: true)
-        initialize(newProcess)
-        session_load(newProcess, session.opencodeSessionId)
-        
-        session.processSessionId = newProcess.sessionId
-        save(registry)
-        
-        process.write(newProcess, prompt)
+    if sessions.empty:
+        notify("No previous sessions found. Starting fresh.")
+        return createNewSession(workdir)
+    
+    # Ask user to choose
+    choice = askUser("Which session to resume?", sessions)
+    selectedId = matchUserChoice(choice, sessions)
+    
+    # Start OpenCode and load session
+    process = bash("opencode acp", background: true, workdir: workdir)
+    initialize(process)
+    
+    session_load(process, selectedId, workdir, mcpServers: [])
+    
+    notify("Session resumed. Conversation history loaded.")
+    return process
 ```
 
-### Key Insight
+### Important Notes
 
-| Handle | Survives Restart? | Use For |
-|--------|-------------------|---------|
-| `processSessionId` | ❌ No | Active connections |
-| `opencodeSessionId` | ✅ Yes | Session recovery |
+- **History replay**: On load, all previous messages stream back
+- **Memory preserved**: Agent remembers the full conversation
+- **Process independent**: Sessions survive OpenCode restarts
 
-The **opencodeSessionId is the durable handle** — store it to survive restarts!
+---
+
+## Updating OpenCode
+
+OpenCode auto-updates when restarted. Use this workflow to check and trigger updates.
+
+### Step 1: Check Current Version
+
+```
+bash(command: "opencode --version")
+```
+
+Returns something like: `opencode version 1.1.13`
+
+Extract the version number (e.g., `1.1.13`).
+
+### Step 2: Check Latest Version
+
+```
+webfetch(url: "https://github.com/anomalyco/opencode/releases/latest", format: "text")
+```
+
+The redirect URL contains the latest version tag:
+- Redirects to: `https://github.com/anomalyco/opencode/releases/tag/v1.2.0`
+- Extract version from the URL path (e.g., `1.2.0`)
+
+### Step 3: Compare and Update
+
+If latest version > current version:
+
+1. **Stop all running OpenCode processes**:
+   ```
+   process.list()  # Find all "opencode acp" processes
+   process.kill(sessionId) # For each running instance
+   ```
+
+2. **Restart instances** (OpenCode auto-downloads new binary on start):
+   ```
+   bash(command: "opencode acp", background: true, workdir: "/path/to/project")
+   ```
+
+3. **Re-initialize** each instance (initialize + session/load for existing sessions)
+
+### Step 4: Verify Update
+
+```
+bash(command: "opencode --version")
+```
+
+If version still doesn't match latest:
+- Inform user: "OpenCode auto-update may have failed. Current: X.X.X, Latest: Y.Y.Y"
+- Suggest manual update: `curl -fsSL https://opencode.dev/install | bash`
+
+### Update Workflow Summary
+
+```
+function updateOpenCode():
+    current = bash("opencode --version")  # e.g., "1.1.13"
+    
+    latestPage = webfetch("https://github.com/anomalyco/opencode/releases/latest")
+    latest = extractVersionFromRedirectUrl(latestPage)  # e.g., "1.2.0"
+    
+    if semverCompare(latest, current) > 0:
+        # Stop all instances
+        for process in process.list():
+            if process.command.includes("opencode"):
+                process.kill(process.sessionId)
+        
+        # Wait briefly for processes to terminate
+        sleep(2 seconds)
+        
+        # Restart triggers auto-update
+        bash("opencode acp", background: true)
+        
+        # Verify
+        newVersion = bash("opencode --version")
+        if newVersion != latest:
+            notify("Auto-update may have failed. Manual update recommended.")
+    else:
+        notify("OpenCode is up to date: " + current)
+```
+
+### Important Notes
+
+- **Sessions persist**: `opencodeSessionId` survives restarts — use `session/load` to recover
+- **Auto-update**: OpenCode downloads new binary automatically on restart
+- **No data loss**: Conversation history is preserved server-side
