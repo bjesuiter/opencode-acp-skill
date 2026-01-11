@@ -43,6 +43,7 @@ docs/acp/           # ACP protocol reference documentation
   https://agentclientprotocol.com/llms.txt
 
 - ACP TypeScript Client Library: https://www.npmjs.com/package/@agentclientprotocol/sdk
+  => Use this if building a CLI or programmatic ACP client in the future: `bun add @agentclientprotocol/sdk`
 
 ## Feature Status
 
