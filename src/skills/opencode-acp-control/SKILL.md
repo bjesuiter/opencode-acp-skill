@@ -1,14 +1,18 @@
 ---
 name: opencode-acp-control
 description: Control OpenCode directly via the Agent Client Protocol (ACP). Start sessions, send prompts, resume conversations, and manage OpenCode updates.
-metadata: {"version": "1.0.0"}
+metadata: {"version": "1.0.2", "author": "Benjamin Jesuiter <bjesuiter@gmail.com>", "license": "MIT", "github_url": "https://github.com/bjesuiter/opencode-acp-skill"}
 ---
 
 # OpenCode ACP Skill
 
 Control OpenCode directly via the Agent Client Protocol (ACP).
 
-> **More Info**: For detailed ACP protocol documentation, see: https://agentclientprotocol.com/llms.txt
+## Metadata
+
+- For ACP Protocol Docs (for Agents/LLMs): https://agentclientprotocol.com/llms.txt
+- GitHub Repo: https://github.com/bjesuiter/opencode-acp-skill
+- If you have issues with this skill, please open an issue ticket here: https://github.com/bjesuiter/opencode-acp-skill/issues
 
 ## Quick Reference
 
