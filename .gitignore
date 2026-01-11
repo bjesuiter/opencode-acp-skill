@@ -36,4 +36,7 @@ auth-profiles.json
 # Finder (MacOS) folder config
 .DS_Store
 
+# test playground (generated files)
+playground
+
 
