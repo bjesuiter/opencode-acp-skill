@@ -1,118 +1,58 @@
 # Test 06: Session Persistence (Load Previous Session)
-This is a testfile which should be executed by an llm.
-It expects to be run in a "clawdbot --dev" environment.
-If you're not running in a clawdbot environment, stop directly and tell the user!
-If you're running in clawdbot, execute the tasks and compare the results as written!
 
-**Date**: 2026-01-11  
-**Status**: ✅ PASSED  
-**Tester**: Robi 🤖
+## Goal
+Verify a new OpenCode ACP process can load and continue a previous session with full history.
 
-## Objective
-
-Verify that a new OpenCode ACP instance can load and continue a previous session, preserving full conversation history.
+## Guardrail
+- This test must run in a `clawdbot --dev` environment.
+- If not running in clawdbot, stop and report the test as not run.
 
 ## Prerequisites
+- A previous ACP session exists with known `sessionId`.
+- That original ACP process is no longer running.
 
-- Instance 1's session (`ses_451cd8ae0ffegNQsh59nuM3VVy`) previously created FIRST.md and THIRD.md
-- Instance 1 process terminated (30min timeout)
+## Reporting
+- Use the suite report file in `reports/` (one markdown file per full suite run).
+- Append a section named `## Test 06: Session Persistence (Load Previous Session)` with status, evidence, and notes.
 
 ## Test Steps
 
-### Step 1: Verify Original Instance Terminated
-
-```
-process(action: "list")
-
-68707955 failed    30m00s :: opencode acp  ← Instance 1 (terminated)
-```
-
-### Step 2: Start New Instance
-
+### Step 1: Start New ACP Process
 ```
 bash(command: "opencode acp", background: true)
 ```
+**Expected**: A new `processSessionId` is returned.
 
-**Result**: `processSessionId: 44b1d1d0-e224-4b86-8fe4-a8e2bd2b3bf5`
-
-### Step 3: Initialize
-
+### Step 2: Initialize
 ```json
-{"jsonrpc":"2.0","id":0,"method":"initialize",...}
+{"jsonrpc":"2.0","id":0,"method":"initialize","params":{"protocolVersion":1,"clientCapabilities":{"fs":{"readTextFile":true,"writeTextFile":true},"terminal":true},"clientInfo":{"name":"clawdbot","title":"Clawdbot","version":"1.0.0"}}}
 ```
+**Expected**: Response includes `result.agentCapabilities.loadSession: true`.
 
-**Result**: ✅ `loadSession: true` capability confirmed
-
-### Step 4: Load Previous Session
-
-First attempt (failed - missing required params):
+### Step 3: Load Previous Session (Required Params)
 ```json
-{"jsonrpc":"2.0","id":1,"method":"session/load","params":{"sessionId":"ses_451cd8ae0ffegNQsh59nuM3VVy"}}
+{"jsonrpc":"2.0","id":1,"method":"session/load","params":{"sessionId":"<previous-sessionId>","cwd":"/path/to/playground","mcpServers":[]}}
 ```
+**Expected**: History replay begins and the session is loaded.
 
-**Error**: `cwd` and `mcpServers` required
-
-Second attempt (success):
+### Step 4: Ask About Prior Actions
 ```json
-{"jsonrpc":"2.0","id":2,"method":"session/load","params":{"sessionId":"ses_451cd8ae0ffegNQsh59nuM3VVy","cwd":"/path/to/playground","mcpServers":[]}}
+{"jsonrpc":"2.0","id":2,"method":"session/prompt","params":{"sessionId":"<previous-sessionId>","prompt":[{"type":"text","text":"What have you done first?"}]}}
 ```
+**Expected**: Response references the original first action from the prior session.
 
-**Result**: ✅ Session loaded with full history replay
+## Assertions
+- `initialize` indicates `loadSession: true`.
+- `session/load` succeeds with `cwd` and `mcpServers` provided.
+- Loaded session can answer questions about prior actions.
 
-### Step 5: History Replay
-
-On load, OpenCode streamed the entire conversation history:
-
+## Report Template
 ```
-1. user_message_chunk: "Create a file called FIRST.md..."
-   tool_call_update: Created playground/FIRST.md
-   agent_message_chunk: "Done! Created FIRST.md..."
-
-2. user_message_chunk: "Which plugins are loaded?..."
-   agent_message_chunk: [MCP servers list]
-
-3. user_message_chunk: "Write all the plugins...to THIRD.md"
-   tool_call_update: Created playground/THIRD.md
-   agent_message_chunk: "Done! Created THIRD.md..."
+## Test 06: Session Persistence (Load Previous Session)
+- Status: pass | fail | not run
+- Evidence:
+  - processSessionId: <id>
+  - loaded sessionId: <id>
+  - sample reply: <quote>
+- Notes: <optional>
 ```
-
-### Step 6: Ask About Previous Actions
-
-```json
-{"jsonrpc":"2.0","id":3,"method":"session/prompt","params":{"sessionId":"ses_451cd8ae0ffegNQsh59nuM3VVy","prompt":[{"type":"text","text":"What have you done first?"}]}}
-```
-
-**Response**:
-> "I created a file called `FIRST.md` in the current directory with a simple greeting message. Here's what it contained:
-> ```markdown
-> # Hello!
-> 
-> Welcome to this project. We're glad you're here.
-> ```"
-
-## session/load Parameters
-
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `sessionId` | ✅ | ACP session ID to load |
-| `cwd` | ✅ | Working directory |
-| `mcpServers` | ✅ | MCP server configuration (can be `[]`) |
-
-## What This Proves
-
-1. **Session persistence**: OpenCode stores session history server-side
-2. **Full history replay**: On load, all messages and tool calls are streamed back
-3. **Memory preservation**: Agent remembers everything from the previous session
-4. **Process independence**: Sessions survive process termination
-5. **Cross-instance continuity**: New process can pick up where old one left off
-
-## Use Cases
-
-- **Crash recovery**: Resume work after unexpected termination
-- **Long-running tasks**: Continue multi-day development sessions
-- **Context switching**: Load different project sessions as needed
-- **Debugging**: Reload a session to inspect what happened
-
-## Conclusion
-
-OpenCode ACP sessions persist independently of the running process. A new OpenCode instance can load any previous session using `session/load`, gaining full access to the conversation history and agent memory. This enables robust, resumable AI-assisted workflows.
