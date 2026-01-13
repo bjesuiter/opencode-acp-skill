@@ -35,6 +35,9 @@ bunx tsc --noEmit
 
 This project uses manual integration tests defined as markdown files in `tests/`.
 
+The result of the test runs should be logged into a `reports/` directory in the repo.
+Each run of the full test suite should generate a new markdown file with the result of each test inside (one markdown per suite run).
+
 **To run the test suite:**
 1. Clean all files from `playground/` folder
 2. Go into the `tests/` directory and read each `.md` file, executing them sequentially (01, 02, 03, etc.)

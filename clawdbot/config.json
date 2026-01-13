@@ -1,8 +1,8 @@
 {
   "wizard": {
-    "lastRunAt": "2026-01-13T07:27:06.035Z",
-    "lastRunVersion": "2026.1.10",
-    "lastRunCommand": "configure",
+    "lastRunAt": "2026-01-13T08:52:01.132Z",
+    "lastRunVersion": "2026.1.11-4",
+    "lastRunCommand": "doctor",
     "lastRunMode": "local"
   },
   "auth": {
@@ -14,35 +14,6 @@
       "minimax:default": {
         "provider": "minimax",
         "mode": "api_key"
-      }
-    }
-  },
-  "messages": {
-    "ackReactionScope": "group-mentions"
-  },
-  "gateway": {
-    "port": 19001,
-    "mode": "local",
-    "bind": "loopback",
-    "tailscale": {
-      "mode": "off",
-      "resetOnExit": false
-    }
-  },
-  "skills": {
-    "install": {
-      "nodeManager": "bun"
-    }
-  },
-  "agents": {
-    "defaults": {
-      "models": {
-        "minimax/MiniMax-M2.1": {
-          "alias": "Minimax"
-        }
-      },
-      "model": {
-        "primary": "minimax/MiniMax-M2.1"
       }
     }
   },
@@ -71,6 +42,35 @@
           }
         ]
       }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "minimax/MiniMax-M2.1"
+      },
+      "models": {
+        "minimax/MiniMax-M2.1": {
+          "alias": "Minimax"
+        }
+      }
+    }
+  },
+  "messages": {
+    "ackReactionScope": "group-mentions"
+  },
+  "gateway": {
+    "port": 19001,
+    "mode": "local",
+    "bind": "loopback",
+    "tailscale": {
+      "mode": "off",
+      "resetOnExit": false
+    }
+  },
+  "skills": {
+    "install": {
+      "nodeManager": "bun"
     }
   }
 }
