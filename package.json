@@ -3,14 +3,17 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "conf": "CLAWDBOT_STATE_DIR=./clawdbot/state CLAWDBOT_CONFIG_PATH=./clawdbot/config.json bun clawdbot --dev config",
-    "gate": "CLAWDBOT_STATE_DIR=./clawdbot/state CLAWDBOT_CONFIG_PATH=./clawdbot/config.json bun clawdbot --dev gateway",
-    "tui": "CLAWDBOT_STATE_DIR=./clawdbot/state CLAWDBOT_CONFIG_PATH=./clawdbot/config.json bun clawdbot --dev tui",
-    "doctor": "CLAWDBOT_STATE_DIR=./clawdbot/state CLAWDBOT_CONFIG_PATH=./clawdbot/config.json bun clawdbot --dev doctor",
+    "clawdbot": "CLAWDBOT_GATEWAY_TOKEN=4a46bf6d99a2015f391dcfb079d28330525cde93a5726542█ dotenvx run -- clawdbot",
+    "onboard": "bun clawdbot --dev onboard",
+    "conf": "bun clawdbot --dev config",
+    "gate": "bun clawdbot --dev gateway",
+    "tui": "bun clawdbot --dev tui",
+    "doctor": "bun clawdbot --dev doctor",
     "dry": "clawdhub sync --root src/skills --all --dry-run",
     "release": "clawdhub sync --root src/skills --all"
   },
   "devDependencies": {
+    "@dotenvx/dotenvx": "^1.51.4",
     "@types/bun": "latest",
     "clawdbot": "^2026.1.11-4",
     "clawdhub": "^0.2.0"
