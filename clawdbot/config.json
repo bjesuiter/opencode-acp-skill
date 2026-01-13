@@ -1,6 +1,6 @@
 {
   "wizard": {
-    "lastRunAt": "2026-01-11T17:16:01.627Z",
+    "lastRunAt": "2026-01-13T07:27:06.035Z",
     "lastRunVersion": "2026.1.10",
     "lastRunCommand": "configure",
     "lastRunMode": "local"
@@ -10,6 +10,10 @@
       "anthropic:m3mbp": {
         "provider": "anthropic",
         "mode": "token"
+      },
+      "minimax:default": {
+        "provider": "minimax",
+        "mode": "api_key"
       }
     }
   },
@@ -28,6 +32,45 @@
   "skills": {
     "install": {
       "nodeManager": "bun"
+    }
+  },
+  "agents": {
+    "defaults": {
+      "models": {
+        "minimax/MiniMax-M2.1": {
+          "alias": "Minimax"
+        }
+      },
+      "model": {
+        "primary": "minimax/MiniMax-M2.1"
+      }
+    }
+  },
+  "models": {
+    "mode": "merge",
+    "providers": {
+      "minimax": {
+        "baseUrl": "https://api.minimax.io/anthropic",
+        "api": "anthropic-messages",
+        "models": [
+          {
+            "id": "MiniMax-M2.1",
+            "name": "MiniMax M2.1",
+            "reasoning": false,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 15,
+              "output": 60,
+              "cacheRead": 2,
+              "cacheWrite": 10
+            },
+            "contextWindow": 200000,
+            "maxTokens": 8192
+          }
+        ]
+      }
     }
   }
 }
