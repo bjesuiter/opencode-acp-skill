@@ -3,11 +3,12 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "clawdbot": "CLAWDBOT_GATEWAY_TOKEN=4a46bf6d99a2015f391dcfb079d28330525cde93a5726542 clawdbot",
+    "clawdbot": "CLAWDBOT_GATEWAY_TOKEN=ffd5ab740ee362e59360bde40cf04cc881ac2ac28920e360 clawdbot",
     "onboard": "bun clawdbot --dev onboard",
     "conf": "bun clawdbot --dev config",
     "gate": "bun clawdbot --dev gateway",
     "tui": "bun clawdbot --dev tui",
+    "dash": "bun clawdbot --dev dashboard",
     "doctor": "bun clawdbot --dev doctor",
     "dry": "clawdhub sync --root src/skills --all --dry-run",
     "release": "clawdhub sync --root src/skills --all"
