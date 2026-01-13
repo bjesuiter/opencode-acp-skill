@@ -1,4 +1,8 @@
 # Test 08: Resume Session Workflow
+This is a testfile which should be executed by an llm.
+It expects to be run in a "clawdbot --dev" environment.
+If you're not running in a clawdbot environment, stop directly and tell the user!
+If you're running in clawdbot, execute the tasks and compare the results as written!
 
 **Date**: 2026-01-11  
 **Status**: DOCUMENTED  
