@@ -15,7 +15,6 @@
   "devDependencies": {
     "@dotenvx/dotenvx": "^1.51.4",
     "@types/bun": "latest",
-    "clawdbot": "^2026.1.11-4",
     "clawdhub": "^0.2.0"
   },
   "peerDependencies": {
