@@ -3,7 +3,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "clawdbot": "CLAWDBOT_GATEWAY_TOKEN=4a46bf6d99a2015f391dcfb079d28330525cde93a5726542█ dotenvx run -- clawdbot",
+    "clawdbot": "CLAWDBOT_GATEWAY_TOKEN=4a46bf6d99a2015f391dcfb079d28330525cde93a5726542 clawdbot",
     "onboard": "bun clawdbot --dev onboard",
     "conf": "bun clawdbot --dev config",
     "gate": "bun clawdbot --dev gateway",
