@@ -31,7 +31,8 @@ Control OpenCode directly via the Agent Client Protocol (ACP).
 ```
 bash(
   command: "opencode acp --cwd /path/to/your/project",
-  background: true
+  background: true,
+  workdir: "/path/to/your/project"
 )
 ```
 
@@ -122,7 +123,7 @@ Per OpenCode instance, track:
 ## Example: Complete Interaction
 
 ```
-1. bash(command: "opencode acp --cwd /home/user/myproject", background: true)
+1. bash(command: "opencode acp --cwd /home/user/myproject", background: true, workdir: "/home/user/myproject")
    -> processSessionId: "bg_42"
 
 2. process.write(sessionId: "bg_42", data: '{"jsonrpc":"2.0","id":0,"method":"initialize",...}\n')
@@ -180,7 +181,7 @@ Once user responds (e.g., "1", "the first one", or "ses_451cd8ae..."):
 
 1. **Start OpenCode ACP**:
    ```
-   bash(command: "opencode acp --cwd /path/to/project", background: true)
+   bash(command: "opencode acp --cwd /path/to/project", background: true, workdir: "/path/to/project")
    ```
 
 2. **Initialize**:
@@ -214,7 +215,7 @@ function resumeSession(workdir):
     selectedId = matchUserChoice(choice, sessions)
     
     # Start OpenCode and load session
-    process = bash("opencode acp --cwd " + workdir, background: true)
+    process = bash("opencode acp --cwd " + workdir, background: true, workdir: workdir)
     initialize(process)
     
     session_load(process, selectedId, workdir, mcpServers: [])
@@ -267,7 +268,7 @@ If latest version > current version:
 
 2. **Restart instances** (OpenCode auto-downloads new binary on start):
    ```
-   bash(command: "opencode acp --cwd /path/to/project", background: true)
+   bash(command: "opencode acp --cwd /path/to/project", background: true, workdir: "/path/to/project")
    ```
 
 3. **Re-initialize** each instance (initialize + session/load for existing sessions)
