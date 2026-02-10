@@ -4,9 +4,14 @@
 
 ## Overview
 
-This skill teaches clawdbot how to communicate directly with OpenCode using the ACP protocol. Instead of a CLI wrapper, clawdbot becomes a native ACP client using its built-in `bash` and `process` tools.
+This skill teaches clawdbot how to communicate directly with OpenCode using the ACP protocol. Two connection modes are supported:
+
+- **Local**: Start `opencode acp` via `bash` and communicate via the `process` tool (stdin/stdout).
+- **Remote**: Connect to an OpenCode ACP server already running on another host via a bidirectional channel (e.g. WebSocket or TCP). Same JSON-RPC message format and workflow after connection.
 
 ### Architecture
+
+**Local (opencode acp process):**
 
 ```
 Clawdbot
@@ -19,12 +24,25 @@ Clawdbot
            +-- poll: receive JSON-RPC responses (stdout)
 ```
 
+**Remote (ACP server on another host):**
+
+```
+Clawdbot
+    |
+    +-- connect tool (e.g. WebSocket / TCP client)
+    |      +-- connect to user-provided URL or host:port
+    |
+    +-- same JSON-RPC over the channel
+           +-- write: send newline-delimited JSON-RPC
+           +-- read/poll: receive newline-delimited JSON-RPC
+```
+
 ### Key Benefits
 
 - No additional CLI layer to maintain
 - Direct ACP protocol communication
-- Leverages clawdbot's native background process management
-- Each `bash` spawn creates an isolated OpenCode instance
+- **Local**: Leverages clawdbot's native background process management; each `bash` spawn is an isolated OpenCode instance
+- **Remote**: Use an existing OpenCode ACP server on another machine without starting a local process
 
 ---
 
@@ -32,17 +50,20 @@ Clawdbot
 
 ### Multiple Sessions
 
-Each OpenCode instance runs in its own clawdbot background process. To manage multiple projects:
+**Local:** Each OpenCode instance runs in its own clawdbot background process. **Remote:** Each connection to a remote server can host one or more ACP sessions (session/new per conversation).
 
-| Concept | Clawdbot Level | OpenCode/ACP Level |
-|---------|----------------|-------------------|
-| Process | `bash` sessionId | N/A |
-| Session | N/A | ACP `sessionId` |
+| Concept | Local (Clawdbot) | Remote | OpenCode/ACP Level |
+|---------|------------------|--------|---------------------|
+| Connection | `bash` → processSessionId | connect tool → connectionId | N/A |
+| Session | N/A | N/A | ACP `sessionId` |
 
-- **Clawdbot process sessionId**: Identifies the background `opencode acp` process
-- **ACP sessionId**: Identifies the conversation within that OpenCode instance
+- **Local**: `processSessionId` identifies the background `opencode acp` process
+- **Remote**: `connectionId` (or handle) identifies the open channel to the remote ACP server
+- **ACP sessionId**: Identifies the conversation within that OpenCode instance (same in both modes)
 
 ### Lifecycle
+
+**Local:**
 
 ```
 1. START       bash(command: "opencode acp", background: true)
@@ -62,6 +83,8 @@ Each OpenCode instance runs in its own clawdbot background process. To manage mu
                
 6. TERMINATE   process.kill(processSessionId)
 ```
+
+**Remote:** Same steps 2–5; step 1 is “connect to URL/host:port” (returns connectionId), step 6 is “close connection” (no process to kill). List sessions and version check are not available via remote unless the server exposes them.
 
 ---
 
@@ -225,27 +248,29 @@ Clawdbot must maintain a counter for JSON-RPC message IDs:
 
 ## State Tracking
 
-Clawdbot must track per OpenCode instance:
+Clawdbot must track per OpenCode connection (local or remote):
 
-| State | Description | Example |
-|-------|-------------|---------|
-| `processSessionId` | Clawdbot's background process ID | `"bg_12345"` |
-| `acpSessionId` | OpenCode's session ID | `"sess_abc123"` |
-| `messageIdCounter` | JSON-RPC request ID | `3` |
-| `cwd` | Working directory | `"/home/user/project"` |
-| `initialized` | Whether initialize handshake done | `true` |
+| State | Description | Example | Mode |
+|-------|-------------|---------|------|
+| `processSessionId` | Clawdbot's background process ID (local only) | `"bg_12345"` | Local |
+| `connectionId` | Handle from connect tool (remote only) | `"conn_1"` | Remote |
+| `acpSessionId` | OpenCode's session ID | `"sess_abc123"` | Both |
+| `messageIdCounter` | JSON-RPC request ID | `3` | Both |
+| `cwd` | Working directory | `"/home/user/project"` | Both |
+| `initialized` | Whether initialize handshake done | `true` | Both |
 
 ---
 
 ## Error Handling
 
-### Process Errors
+### Process / Connection Errors
 
 | Error | Detection | Action |
 |-------|-----------|--------|
-| OpenCode not found | `process.poll()` returns error | Inform user to install OpenCode |
-| Process crashed | `process.poll()` shows exit status | Restart or inform user |
-| Timeout | No response after max attempts | Cancel and inform user |
+| **Local**: OpenCode not found | `process.poll()` returns error | Inform user to install OpenCode |
+| **Local**: Process crashed | `process.poll()` shows exit status | Restart or inform user |
+| **Remote**: Connection closed or error | read/poll fails or connection tool reports disconnect | Notify user; they may need to reconnect or restart the remote server |
+| Timeout | No response after max attempts | **Local**: Kill process, inform user. **Remote**: Close connection, inform user |
 
 ### Protocol Errors
 
@@ -292,23 +317,43 @@ Clawdbot must track per OpenCode instance:
    -> check if still receiving updates or idle
 ```
 
-### Workflow 3: Terminate Session
+### Workflow 3: Terminate Session (local)
 
 ```
 1. process.kill(sessionId: "bg_001")
    -> OpenCode process terminated
 ```
 
+### Workflow 4: Connect to remote ACP server and ask a question
+
+```
+1. connection = connect(url: "ws://remote-host:4096")   # or TCP; tool depends on environment
+   -> connectionId: "conn_1"
+
+2. connection.write('{"jsonrpc":"2.0","id":0,"method":"initialize",...}\n')
+   connection.read() or poll() -> initialize response
+
+3. connection.write('{"jsonrpc":"2.0","id":1,"method":"session/new","params":{"cwd":"/path/on/remote","mcpServers":[]}}\n')
+   connection.read() -> acpSessionId
+
+4. connection.write('{"jsonrpc":"2.0","id":2,"method":"session/prompt",...}\n')
+   Poll/read every 2 sec; collect session/update; stop on stopReason
+
+5. connection.close() when done
+```
+
 ---
 
 ## Future Enhancements (v2+)
 
+- [x] **Remote ACP** – connect to an ACP server on another host (same JSON-RPC, different transport)
 - [ ] Continuous polling option for real-time streaming
 - [ ] Session persistence (save/load ACP sessionId)
 - [ ] MCP server passthrough (connect clawdbot's MCPs to OpenCode)
 - [ ] Permission request handling (`session/request_permission`)
 - [ ] Mode switching (`session/set_mode`)
 - [ ] File system method handling (`fs/read_text_file`, `fs/write_text_file`)
+- [ ] Streamable HTTP transport when standardized in ACP
 
 ---
 

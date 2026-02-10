@@ -1,7 +1,7 @@
 ---
 name: opencode-acp-control
-description: Control OpenCode directly via the Agent Client Protocol (ACP). Start sessions, send prompts, resume conversations, and manage OpenCode updates.
-metadata: {"version": "1.0.2", "author": "Benjamin Jesuiter <bjesuiter@gmail.com>", "license": "MIT", "github_url": "https://github.com/bjesuiter/opencode-acp-skill"}
+description: Control OpenCode via the Agent Client Protocol (ACP)—locally (opencode acp process) or remotely (connect to an ACP server on another host). Start sessions, send prompts, resume conversations, and manage OpenCode updates.
+metadata: {"version": "1.1.0", "author": "Benjamin Jesuiter <bjesuiter@gmail.com>", "license": "MIT", "github_url": "https://github.com/bjesuiter/opencode-acp-skill"}
 ---
 
 # OpenCode ACP Skill
@@ -183,6 +183,24 @@ Per OpenCode connection (local or remote), track:
    -> Final response: stopReason: "end_turn"
 
 6. When done: process.kill(sessionId: "bg_42")
+```
+
+### Example: Remote connection
+
+```
+1. connection = connect(url: "ws://remote-host:4096")   # or your environment's tool for WebSocket/TCP
+   -> connectionId: "conn_1"
+
+2. connection.write('{"jsonrpc":"2.0","id":0,"method":"initialize",...}\n')
+   connection.read() or poll() -> initialize response
+
+3. connection.write('{"jsonrpc":"2.0","id":1,"method":"session/new","params":{"cwd":"/path/on/remote","mcpServers":[]}}\n')
+   connection.read() -> opencodeSessionId: "sess_xyz789"
+
+4. connection.write('{"jsonrpc":"2.0","id":2,"method":"session/prompt","params":{"sessionId":"sess_xyz789","prompt":[...]}}\n')
+   Poll/read every 2 sec until stopReason; collect session/update content.
+
+5. When done: connection.close()
 ```
 
 ---
