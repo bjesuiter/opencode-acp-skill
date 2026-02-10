@@ -6,7 +6,16 @@ metadata: {"version": "1.0.2", "author": "Benjamin Jesuiter <bjesuiter@gmail.com
 
 # OpenCode ACP Skill
 
-Control OpenCode directly via the Agent Client Protocol (ACP).
+Control OpenCode directly via the Agent Client Protocol (ACP). You can use OpenCode **locally** (start a process on this machine) or **remotely** (connect to an ACP server on another host).
+
+## Connection Modes
+
+| Mode | When to use |
+|------|-------------|
+| **Local** | User wants OpenCode to run on the same machine. You start `opencode acp` via bash and talk to it via the process tool (stdin/stdout). |
+| **Remote** | User provides a URL or host:port of an already-running OpenCode ACP server (e.g. on another machine or in the cloud). You connect to it with a bidirectional channel and send the same JSON-RPC messages. |
+
+After the connection is established, the protocol is identical: initialize → session/new or session/load → session/prompt, same message format and polling.
 
 ## Metadata
 
@@ -15,6 +24,8 @@ Control OpenCode directly via the Agent Client Protocol (ACP).
 - If you have issues with this skill, please open an issue ticket here: https://github.com/bjesuiter/opencode-acp-skill/issues
 
 ## Quick Reference
+
+### Local mode (opencode acp process)
 
 | Action | How |
 |--------|-----|
@@ -26,7 +37,17 @@ Control OpenCode directly via the Agent Client Protocol (ACP).
 | Resume session | List sessions → ask user → `session/load` |
 | Check version | `bash(command: "opencode --version")` |
 
-## Starting OpenCode
+### Remote mode (ACP server on another host)
+
+| Action | How |
+|--------|-----|
+| Connect to remote | Use the tool that opens a bidirectional channel (e.g. WebSocket or TCP) to the user-provided URL or host:port. Same JSON-RPC messages, newline-delimited. |
+| Send message | Write JSON-RPC line(s) to the channel (e.g. `connection.write(data: "<json-rpc>\n")`). |
+| Read response | Read from the channel (e.g. poll or stream). Parse newline-delimited JSON; same polling strategy as local. |
+| Disconnect | Close the connection when the user is done (no process to kill). |
+| List sessions | Not available via CLI on remote; use `session/load` with a known session ID if the user has one. |
+
+## Starting OpenCode (local)
 
 ```
 bash(
@@ -36,7 +57,29 @@ bash(
 )
 ```
 
-Save the returned `sessionId` - you'll need it for all subsequent commands.
+Save the returned `sessionId` (use it as the target for `process.write` and `process.poll`). You'll need it for all subsequent commands.
+
+## Connecting to a remote ACP server
+
+When the user wants to use an OpenCode ACP server that is already running on another host (e.g. `ws://remote-host:4096` or `tcp://remote-host:4096`):
+
+1. **Establish the connection**  
+   Use the tool that can open a **bidirectional** channel to the given URL or host:port (e.g. WebSocket client or TCP socket). The remote server must speak the same ACP protocol: newline-delimited JSON-RPC 2.0.
+
+2. **Same protocol from here on**  
+   Once connected, send and receive the same messages as in local mode:
+   - Send `initialize`, then wait for the response.
+   - Send `session/new` (with `cwd` and `mcpServers`) or `session/load` (with existing `sessionId`, `cwd`, `mcpServers`).
+   - Send `session/prompt`, then read until you get a response with `stopReason`.
+   - Use `session/cancel` to cancel if needed.
+
+3. **State to track (remote)**  
+   - `connectionId` or handle from your connect tool (instead of process sessionId).
+   - `opencodeSessionId` from `session/new` or the ID used in `session/load`.
+   - `messageId` – increment for each request.
+
+4. **Ending**  
+   When the user is done, close the connection (no process to kill). List sessions and version check are typically not available for remote; only what the ACP channel provides.
 
 ## Protocol Basics
 
@@ -91,10 +134,10 @@ No response expected - this is a notification.
 
 ## State to Track
 
-Per OpenCode instance, track:
-- `processSessionId` - from bash tool (clawdbot's process ID)
-- `opencodeSessionId` - from session/new response (OpenCode's session ID)  
-- `messageId` - increment for each request you send
+Per OpenCode connection (local or remote), track:
+- **Local**: `processSessionId` – from bash tool (clawdbot's process ID). **Remote**: `connectionId` or handle from the connect tool.
+- `opencodeSessionId` – from session/new response (or the ID used in session/load).
+- `messageId` – increment for each request you send.
 
 ## Polling Strategy
 
@@ -117,8 +160,9 @@ Per OpenCode instance, track:
 |-------|----------|
 | Empty poll response | Keep polling - agent is thinking |
 | Parse error | Skip malformed line, continue |
-| Process exited | Restart OpenCode |
-| No response after 5min | Kill process, start fresh |
+| **Local**: Process exited | Restart OpenCode (bash again). |
+| **Remote**: Connection closed or error | Notify user; they may need to reconnect or restart the remote server. |
+| No response after 5min | **Local**: Kill process, start fresh. **Remote**: Close connection, notify user. |
 
 ## Example: Complete Interaction
 
