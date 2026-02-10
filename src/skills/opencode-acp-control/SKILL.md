@@ -1,7 +1,7 @@
 ---
 name: opencode-acp-control
 description: Control OpenCode via the Agent Client Protocol (ACP)—locally (opencode acp process) or remotely (connect to an ACP server on another host). Start sessions, send prompts, resume conversations, and manage OpenCode updates.
-metadata: {"version": "1.1.0", "author": "Benjamin Jesuiter <bjesuiter@gmail.com>", "license": "MIT", "github_url": "https://github.com/bjesuiter/opencode-acp-skill"}
+metadata: {"version": "1.2.0", "author": "Benjamin Jesuiter <bjesuiter@gmail.com>", "license": "MIT", "github_url": "https://github.com/bjesuiter/opencode-acp-skill"}
 ---
 
 # OpenCode ACP Skill
@@ -35,6 +35,7 @@ After the connection is established, the protocol is identical: initialize → s
 | Stop OpenCode | `process.kill(sessionId)` |
 | List sessions | `bash(command: "opencode session list", workdir: "...")` |
 | Resume session | List sessions → ask user → `session/load` |
+| **Active session (persistent)** | Use the same `opencodeSessionId` for all prompts until the user asks for a new session or to switch/resume another. Do not call `session/new` again for each prompt. |
 | Check version | `bash(command: "opencode --version")` |
 
 ### Remote mode (ACP server on another host)
@@ -46,6 +47,7 @@ After the connection is established, the protocol is identical: initialize → s
 | Read response | Read from the channel (e.g. poll or stream). Parse newline-delimited JSON; same polling strategy as local. |
 | Disconnect | Close the connection when the user is done (no process to kill). |
 | List sessions | Not available via CLI on remote; use `session/load` with a known session ID if the user has one. |
+| **Active session (persistent)** | Same as local: use one `opencodeSessionId` for all prompts until the user changes it (new session or load another). |
 
 ## Starting OpenCode (local)
 
@@ -99,13 +101,18 @@ Send immediately after starting OpenCode:
 
 Poll for response. Expect `result.protocolVersion: 1`.
 
-### Step 2: Create Session
+### Step 2: Create or choose a session (then keep using it)
+
+**Establish the active session once** (or when the user asks to change it):
+
+- **New session:** Send `session/new`, save `result.sessionId`. Use this ID for all subsequent prompts until the user changes session.
+- **Resume / use specific session:** If the user gives a session ID or chooses one from a list, send `session/load` with that ID (and `cwd`, `mcpServers`). Save that session ID as the active one.
 
 ```json
 {"jsonrpc":"2.0","id":1,"method":"session/new","params":{"cwd":"/path/to/project","mcpServers":[]}}
 ```
 
-Poll for response. Save `result.sessionId` (e.g., `"sess_abc123"`).
+Poll for response. Save `result.sessionId` (e.g., `"sess_abc123"`) as the **active session** for this connection. Use it for every `session/prompt` and `session/cancel` until the user explicitly asks for a new session or to switch to another.
 
 ### Step 3: Send Prompts
 
@@ -136,8 +143,20 @@ No response expected - this is a notification.
 
 Per OpenCode connection (local or remote), track:
 - **Local**: `processSessionId` – from bash tool (clawdbot's process ID). **Remote**: `connectionId` or handle from the connect tool.
-- `opencodeSessionId` – from session/new response (or the ID used in session/load).
+- **`opencodeSessionId` (active session)** – The ACP session currently in use. Set once by `session/new` or `session/load`, then **reuse for all prompts** until the user asks to start a new session or to switch/resume a different one. Do not call `session/new` again for each prompt.
 - `messageId` – increment for each request you send.
+
+## Session persistence
+
+**One active session per ACP connection.** You decide which session is active when you establish the connection or when the user asks to change it. From then on, use that session for every prompt until the user explicitly changes it.
+
+- **Set the active session** (do this once, or when the user switches):
+  - User wants a **new** conversation → send `session/new`, store `result.sessionId`.
+  - User wants to **resume** or **use a specific session** (e.g. they give an ID or choose from a list) → send `session/load` with that ID (and `cwd`, `mcpServers`), then use that session ID as active.
+- **Use it persistently:** For every subsequent `session/prompt` and `session/cancel`, use the same stored `opencodeSessionId`. Do **not** call `session/new` again for each prompt.
+- **Change only when the user asks:** e.g. "start a new session", "switch to session X", "resume the other one". Then call `session/new` or `session/load` again and store the new ID.
+
+If the user says they want to "use session X for this connection" or "always use this session until I change it", treat that session as the active one and keep using it until they say otherwise.
 
 ## Polling Strategy
 
@@ -291,6 +310,7 @@ function resumeSession(workdir):
 - **History replay**: On load, all previous messages stream back
 - **Memory preserved**: Agent remembers the full conversation
 - **Process independent**: Sessions survive OpenCode restarts
+- **Becomes active session**: After `session/load`, use this session ID as the persistent active session for all following prompts until the user changes it (see Session persistence).
 
 ---
 
