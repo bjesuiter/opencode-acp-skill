@@ -1,3 +1,7 @@
+> ## Documentation Index
+> Fetch the complete documentation index at: https://agentclientprotocol.com/llms.txt
+> Use this file to discover all available pages before exploring further.
+
 # Overview
 
 > How the Agent Client Protocol works
@@ -159,8 +163,3 @@ Learn about [protocol extensibility](./extensibility) to understand how to use t
 * Understand [Session Setup](./session-setup) for creating and loading sessions
 * Review the [Prompt Turn](./prompt-turn) lifecycle
 * Explore [Extensibility](./extensibility) to add custom features
-
-
----
-
-> To find navigation and other pages in this documentation, fetch the llms.txt file at: https://agentclientprotocol.com/llms.txt

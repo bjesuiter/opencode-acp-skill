@@ -1,3 +1,7 @@
+> ## Documentation Index
+> Fetch the complete documentation index at: https://agentclientprotocol.com/llms.txt
+> Use this file to discover all available pages before exploring further.
+
 # Content
 
 > Understanding content blocks in the Agent Client Protocol
@@ -199,8 +203,3 @@ References to resources that the Agent can access.
   Optional metadata about how the content should be used or displayed. [Learn
   more](https://modelcontextprotocol.io/specification/2025-06-18/server/resources#annotations).
 </ParamField>
-
-
----
-
-> To find navigation and other pages in this documentation, fetch the llms.txt file at: https://agentclientprotocol.com/llms.txt

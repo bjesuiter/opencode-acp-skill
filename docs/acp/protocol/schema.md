@@ -1,3 +1,7 @@
+> ## Documentation Index
+> Fetch the complete documentation index at: https://agentclientprotocol.com/llms.txt
+> Use this file to discover all available pages before exploring further.
+
 # Schema
 
 > Schema definitions for the Agent Client Protocol
@@ -258,6 +262,10 @@ Response from loading an existing session.
   See protocol docs: [Extensibility](https://agentclientprotocol.com/protocol/extensibility)
 </ResponseField>
 
+<ResponseField name="configOptions" type={<><span><a href="#sessionconfigoption">SessionConfigOption[]</a></span><span> | null</span></>}>
+  Initial session configuration options if supported by the Agent.
+</ResponseField>
+
 <ResponseField name="modes" type={<><span><a href="#sessionmodestate">SessionModeState</a></span><span> | null</span></>}>
   Initial mode state if supported by the Agent
 
@@ -324,6 +332,10 @@ See protocol docs: [Creating a Session](https://agentclientprotocol.com/protocol
   these keys.
 
   See protocol docs: [Extensibility](https://agentclientprotocol.com/protocol/extensibility)
+</ResponseField>
+
+<ResponseField name="configOptions" type={<><span><a href="#sessionconfigoption">SessionConfigOption[]</a></span><span> | null</span></>}>
+  Initial session configuration options if supported by the Agent.
 </ResponseField>
 
 <ResponseField name="modes" type={<><span><a href="#sessionmodestate">SessionModeState</a></span><span> | null</span></>}>
@@ -415,6 +427,60 @@ See protocol docs: [Check for Completion](https://agentclientprotocol.com/protoc
 
 <ResponseField name="stopReason" type={<a href="#stopreason">StopReason</a>} required>
   Indicates why the agent stopped processing the turn.
+</ResponseField>
+
+<a id="session-set_config_option" />
+
+### <span class="font-mono">session/set\_config\_option</span>
+
+Sets the current value for a session configuration option.
+
+#### <span class="font-mono">SetSessionConfigOptionRequest</span>
+
+Request parameters for setting a session configuration option.
+
+**Type:** Object
+
+**Properties:**
+
+<ResponseField name="_meta" type={"object | null"}>
+  The \_meta property is reserved by ACP to allow clients and agents to attach additional
+  metadata to their interactions. Implementations MUST NOT make assumptions about values at
+  these keys.
+
+  See protocol docs: [Extensibility](https://agentclientprotocol.com/protocol/extensibility)
+</ResponseField>
+
+<ResponseField name="configId" type={<a href="#sessionconfigid">SessionConfigId</a>} required>
+  The ID of the configuration option to set.
+</ResponseField>
+
+<ResponseField name="sessionId" type={<a href="#sessionid">SessionId</a>} required>
+  The ID of the session to set the configuration option for.
+</ResponseField>
+
+<ResponseField name="value" type={<a href="#sessionconfigvalueid">SessionConfigValueId</a>} required>
+  The ID of the configuration option value to set.
+</ResponseField>
+
+#### <span class="font-mono">SetSessionConfigOptionResponse</span>
+
+Response to `session/set_config_option` method.
+
+**Type:** Object
+
+**Properties:**
+
+<ResponseField name="_meta" type={"object | null"}>
+  The \_meta property is reserved by ACP to allow clients and agents to attach additional
+  metadata to their interactions. Implementations MUST NOT make assumptions about values at
+  these keys.
+
+  See protocol docs: [Extensibility](https://agentclientprotocol.com/protocol/extensibility)
+</ResponseField>
+
+<ResponseField name="configOptions" type={<a href="#sessionconfigoption">SessionConfigOption[]</a>} required>
+  The full set of configuration options and their current values.
 </ResponseField>
 
 <a id="session-set_mode" />
@@ -1184,7 +1250,7 @@ The input specification for a command.
 
 **Type:** Union
 
-<ResponseField name="Variant">
+<ResponseField name="unstructured">
   All text that was typed after the command name is provided as input.
 
   <Expandable title="Properties">
@@ -1276,6 +1342,26 @@ See protocol docs: [Client Capabilities](https://agentclientprotocol.com/protoco
   Whether the Client support all `terminal/*` methods.
 
   * Default: `false`
+</ResponseField>
+
+## <span class="font-mono">ConfigOptionUpdate</span>
+
+Session configuration options have been updated.
+
+**Type:** Object
+
+**Properties:**
+
+<ResponseField name="_meta" type={"object | null"}>
+  The \_meta property is reserved by ACP to allow clients and agents to attach additional
+  metadata to their interactions. Implementations MUST NOT make assumptions about values at
+  these keys.
+
+  See protocol docs: [Extensibility](https://agentclientprotocol.com/protocol/extensibility)
+</ResponseField>
+
+<ResponseField name="configOptions" type={<a href="#sessionconfigoption">SessionConfigOption[]</a>} required>
+  The full set of configuration options and their current values.
 </ResponseField>
 
 ## <span class="font-mono">Content</span>
@@ -1680,7 +1766,7 @@ and use the reserved range (-32000 to -32099) for protocol-specific errors.
   **Resource not found**: A given resource, such as a file, was not found.
 </ResponseField>
 
-<ResponseField name="integer" type="int32">
+<ResponseField name="Other" type="int32">
   Other undefined error code.
 </ResponseField>
 
@@ -1921,7 +2007,7 @@ See protocol docs: [MCP Servers](https://agentclientprotocol.com/protocol/sessio
   </Expandable>
 </ResponseField>
 
-<ResponseField name="Variant">
+<ResponseField name="stdio">
   Stdio transport configuration
 
   All Agents MUST support this transport.
@@ -2284,11 +2370,11 @@ The Server MUST reply with the same value in the Response object if included. Th
   {""}
 </ResponseField>
 
-<ResponseField name="integer" type="int64">
+<ResponseField name="Number" type="int64">
   {""}
 </ResponseField>
 
-<ResponseField name="string" type="string">
+<ResponseField name="Str" type="string">
   {""}
 </ResponseField>
 
@@ -2416,6 +2502,162 @@ See protocol docs: [Session Capabilities](https://agentclientprotocol.com/protoc
 
   See protocol docs: [Extensibility](https://agentclientprotocol.com/protocol/extensibility)
 </ResponseField>
+
+## <span class="font-mono">SessionConfigGroupId</span>
+
+Unique identifier for a session configuration option value group.
+
+**Type:** `string`
+
+## <span class="font-mono">SessionConfigId</span>
+
+Unique identifier for a session configuration option.
+
+**Type:** `string`
+
+## <span class="font-mono">SessionConfigOption</span>
+
+A session configuration option selector and its current state.
+
+**Type:** Union
+
+<ResponseField name="select" type="object">
+  Single-value selector (dropdown).
+
+  <Expandable title="Properties">
+    <ResponseField name="currentValue" type={<a href="#sessionconfigvalueid">SessionConfigValueId</a>} required>
+      The currently selected value.
+    </ResponseField>
+
+    <ResponseField name="options" type={<a href="#sessionconfigselectoptions">SessionConfigSelectOptions</a>} required>
+      The set of selectable options.
+    </ResponseField>
+
+    <ResponseField name="type" type={"string"} required />
+  </Expandable>
+</ResponseField>
+
+## <span class="font-mono">SessionConfigOptionCategory</span>
+
+Semantic category for a session configuration option.
+
+This is intended to help Clients distinguish broadly common selectors (e.g. model selector vs
+session mode selector vs thought/reasoning level) for UX purposes (keyboard shortcuts, icons,
+placement). It MUST NOT be required for correctness. Clients MUST handle missing or unknown
+categories gracefully.
+
+Category names beginning with `_` are free for custom use, like other ACP extension methods.
+Category names that do not begin with `_` are reserved for the ACP spec.
+
+**Type:** Union
+
+<ResponseField name="mode" type="string">
+  Session mode selector.
+</ResponseField>
+
+<ResponseField name="model" type="string">
+  Model selector.
+</ResponseField>
+
+<ResponseField name="thought_level" type="string">
+  Thought/reasoning level selector.
+</ResponseField>
+
+<ResponseField name="other" type="string">
+  Unknown / uncategorized selector.
+</ResponseField>
+
+## <span class="font-mono">SessionConfigSelect</span>
+
+A single-value selector (dropdown) session configuration option payload.
+
+**Type:** Object
+
+**Properties:**
+
+<ResponseField name="currentValue" type={<a href="#sessionconfigvalueid">SessionConfigValueId</a>} required>
+  The currently selected value.
+</ResponseField>
+
+<ResponseField name="options" type={<a href="#sessionconfigselectoptions">SessionConfigSelectOptions</a>} required>
+  The set of selectable options.
+</ResponseField>
+
+## <span class="font-mono">SessionConfigSelectGroup</span>
+
+A group of possible values for a session configuration option.
+
+**Type:** Object
+
+**Properties:**
+
+<ResponseField name="_meta" type={"object | null"}>
+  The \_meta property is reserved by ACP to allow clients and agents to attach additional
+  metadata to their interactions. Implementations MUST NOT make assumptions about values at
+  these keys.
+
+  See protocol docs: [Extensibility](https://agentclientprotocol.com/protocol/extensibility)
+</ResponseField>
+
+<ResponseField name="group" type={<a href="#sessionconfiggroupid">SessionConfigGroupId</a>} required>
+  Unique identifier for this group.
+</ResponseField>
+
+<ResponseField name="name" type={"string"} required>
+  Human-readable label for this group.
+</ResponseField>
+
+<ResponseField name="options" type={<a href="#sessionconfigselectoption">SessionConfigSelectOption[]</a>} required>
+  The set of option values in this group.
+</ResponseField>
+
+## <span class="font-mono">SessionConfigSelectOption</span>
+
+A possible value for a session configuration option.
+
+**Type:** Object
+
+**Properties:**
+
+<ResponseField name="_meta" type={"object | null"}>
+  The \_meta property is reserved by ACP to allow clients and agents to attach additional
+  metadata to their interactions. Implementations MUST NOT make assumptions about values at
+  these keys.
+
+  See protocol docs: [Extensibility](https://agentclientprotocol.com/protocol/extensibility)
+</ResponseField>
+
+<ResponseField name="description" type={"string | null"}>
+  Optional description for this option value.
+</ResponseField>
+
+<ResponseField name="name" type={"string"} required>
+  Human-readable label for this option value.
+</ResponseField>
+
+<ResponseField name="value" type={<a href="#sessionconfigvalueid">SessionConfigValueId</a>} required>
+  Unique identifier for this option value.
+</ResponseField>
+
+## <span class="font-mono">SessionConfigSelectOptions</span>
+
+Possible values for a session configuration option.
+
+**Type:** Union
+
+<ResponseField name="Ungrouped" type="array">
+  A flat list of options with no grouping.
+</ResponseField>
+
+<ResponseField name="Grouped" type="array">
+  A list of options grouped under headers.
+</ResponseField>
+
+## <span class="font-mono">SessionConfigValueId</span>
+
+Unique identifier for a session configuration option value.
+
+**Type:** `string`
 
 ## <span class="font-mono">SessionId</span>
 
@@ -2710,6 +2952,26 @@ See protocol docs: [Agent Reports Output](https://agentclientprotocol.com/protoc
 
     <ResponseField name="currentModeId" type={<a href="#sessionmodeid">SessionModeId</a>} required>
       The ID of the current mode
+    </ResponseField>
+
+    <ResponseField name="sessionUpdate" type={"string"} required />
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="config_option_update" type="object">
+  Session configuration options have been updated.
+
+  <Expandable title="Properties">
+    <ResponseField name="_meta" type={"object | null"}>
+      The \_meta property is reserved by ACP to allow clients and agents to attach additional
+      metadata to their interactions. Implementations MUST NOT make assumptions about values at
+      these keys.
+
+      See protocol docs: [Extensibility](https://agentclientprotocol.com/protocol/extensibility)
+    </ResponseField>
+
+    <ResponseField name="configOptions" type={<a href="#sessionconfigoption">SessionConfigOption[]</a>} required>
+      The full set of configuration options and their current values.
     </ResponseField>
 
     <ResponseField name="sessionUpdate" type={"string"} required />
@@ -3165,8 +3427,3 @@ All text that was typed after the command name is provided as input.
 <ResponseField name="hint" type={"string"} required>
   A hint to display when the input hasn't been provided yet
 </ResponseField>
-
-
----
-
-> To find navigation and other pages in this documentation, fetch the llms.txt file at: https://agentclientprotocol.com/llms.txt

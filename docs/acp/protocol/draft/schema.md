@@ -1,3 +1,7 @@
+> ## Documentation Index
+> Fetch the complete documentation index at: https://agentclientprotocol.com/llms.txt
+> Use this file to discover all available pages before exploring further.
+
 # Schema
 
 > Schema definitions for the Agent Client Protocol
@@ -268,10 +272,6 @@ Response from forking an existing session.
 </ResponseField>
 
 <ResponseField name="configOptions" type={<><span><a href="#sessionconfigoption">SessionConfigOption[]</a></span><span> | null</span></>}>
-  **UNSTABLE**
-
-  This capability is not part of the spec yet, and may be removed or changed at any point.
-
   Initial session configuration options if supported by the Agent.
 </ResponseField>
 
@@ -431,10 +431,6 @@ Response from loading an existing session.
 </ResponseField>
 
 <ResponseField name="configOptions" type={<><span><a href="#sessionconfigoption">SessionConfigOption[]</a></span><span> | null</span></>}>
-  **UNSTABLE**
-
-  This capability is not part of the spec yet, and may be removed or changed at any point.
-
   Initial session configuration options if supported by the Agent.
 </ResponseField>
 
@@ -515,10 +511,6 @@ See protocol docs: [Creating a Session](https://agentclientprotocol.com/protocol
 </ResponseField>
 
 <ResponseField name="configOptions" type={<><span><a href="#sessionconfigoption">SessionConfigOption[]</a></span><span> | null</span></>}>
-  **UNSTABLE**
-
-  This capability is not part of the spec yet, and may be removed or changed at any point.
-
   Initial session configuration options if supported by the Agent.
 </ResponseField>
 
@@ -621,6 +613,14 @@ See protocol docs: [Check for Completion](https://agentclientprotocol.com/protoc
   Indicates why the agent stopped processing the turn.
 </ResponseField>
 
+<ResponseField name="usage" type={<><span><a href="#usage">Usage</a></span><span> | null</span></>}>
+  **UNSTABLE**
+
+  This capability is not part of the spec yet, and may be removed or changed at any point.
+
+  Token usage for this turn (optional).
+</ResponseField>
+
 <a id="session-resume" />
 
 ### <span class="font-mono">session/resume</span>
@@ -694,10 +694,6 @@ Response from resuming an existing session.
 </ResponseField>
 
 <ResponseField name="configOptions" type={<><span><a href="#sessionconfigoption">SessionConfigOption[]</a></span><span> | null</span></>}>
-  **UNSTABLE**
-
-  This capability is not part of the spec yet, and may be removed or changed at any point.
-
   Initial session configuration options if supported by the Agent.
 </ResponseField>
 
@@ -719,17 +715,9 @@ Response from resuming an existing session.
 
 ### <span class="font-mono">session/set\_config\_option</span>
 
-**UNSTABLE**
-
-This capability is not part of the spec yet, and may be removed or changed at any point.
-
 Sets the current value for a session configuration option.
 
 #### <span class="font-mono">SetSessionConfigOptionRequest</span>
-
-**UNSTABLE**
-
-This capability is not part of the spec yet, and may be removed or changed at any point.
 
 Request parameters for setting a session configuration option.
 
@@ -758,10 +746,6 @@ Request parameters for setting a session configuration option.
 </ResponseField>
 
 #### <span class="font-mono">SetSessionConfigOptionResponse</span>
-
-**UNSTABLE**
-
-This capability is not part of the spec yet, and may be removed or changed at any point.
 
 Response to `session/set_config_option` method.
 
@@ -1666,7 +1650,7 @@ The input specification for a command.
 
 **Type:** Union
 
-<ResponseField name="Variant">
+<ResponseField name="unstructured">
   All text that was typed after the command name is provided as input.
 
   <Expandable title="Properties">
@@ -1761,10 +1745,6 @@ See protocol docs: [Client Capabilities](https://agentclientprotocol.com/protoco
 </ResponseField>
 
 ## <span class="font-mono">ConfigOptionUpdate</span>
-
-**UNSTABLE**
-
-This capability is not part of the spec yet, and may be removed or changed at any point.
 
 Session configuration options have been updated.
 
@@ -1971,6 +1951,26 @@ A streamed item of content
 
 <ResponseField name="content" type={<a href="#contentblock">ContentBlock</a>} required>
   A single item of content
+</ResponseField>
+
+## <span class="font-mono">Cost</span>
+
+**UNSTABLE**
+
+This capability is not part of the spec yet, and may be removed or changed at any point.
+
+Cost information for a session.
+
+**Type:** Object
+
+**Properties:**
+
+<ResponseField name="amount" type={"number"} required>
+  Total cumulative cost for session.
+</ResponseField>
+
+<ResponseField name="currency" type={"string"} required>
+  ISO 4217 currency code (e.g., "USD", "EUR").
 </ResponseField>
 
 ## <span class="font-mono">CurrentModeUpdate</span>
@@ -2195,7 +2195,7 @@ and use the reserved range (-32000 to -32099) for protocol-specific errors.
   **Resource not found**: A given resource, such as a file, was not found.
 </ResponseField>
 
-<ResponseField name="integer" type="int32">
+<ResponseField name="Other" type="int32">
   Other undefined error code.
 </ResponseField>
 
@@ -2436,7 +2436,7 @@ See protocol docs: [MCP Servers](https://agentclientprotocol.com/protocol/sessio
   </Expandable>
 </ResponseField>
 
-<ResponseField name="Variant">
+<ResponseField name="stdio">
   Stdio transport configuration
 
   All Agents MUST support this transport.
@@ -2841,11 +2841,11 @@ The Server MUST reply with the same value in the Response object if included. Th
   {""}
 </ResponseField>
 
-<ResponseField name="integer" type="int64">
+<ResponseField name="Number" type="int64">
   {""}
 </ResponseField>
 
-<ResponseField name="string" type="string">
+<ResponseField name="Str" type="string">
   {""}
 </ResponseField>
 
@@ -3000,29 +3000,17 @@ See protocol docs: [Session Capabilities](https://agentclientprotocol.com/protoc
 
 ## <span class="font-mono">SessionConfigGroupId</span>
 
-**UNSTABLE**
-
-This capability is not part of the spec yet, and may be removed or changed at any point.
-
 Unique identifier for a session configuration option value group.
 
 **Type:** `string`
 
 ## <span class="font-mono">SessionConfigId</span>
 
-**UNSTABLE**
-
-This capability is not part of the spec yet, and may be removed or changed at any point.
-
 Unique identifier for a session configuration option.
 
 **Type:** `string`
 
 ## <span class="font-mono">SessionConfigOption</span>
-
-**UNSTABLE**
-
-This capability is not part of the spec yet, and may be removed or changed at any point.
 
 A session configuration option selector and its current state.
 
@@ -3046,16 +3034,15 @@ A session configuration option selector and its current state.
 
 ## <span class="font-mono">SessionConfigOptionCategory</span>
 
-**UNSTABLE**
-
-This capability is not part of the spec yet, and may be removed or changed at any point.
-
 Semantic category for a session configuration option.
 
 This is intended to help Clients distinguish broadly common selectors (e.g. model selector vs
 session mode selector vs thought/reasoning level) for UX purposes (keyboard shortcuts, icons,
 placement). It MUST NOT be required for correctness. Clients MUST handle missing or unknown
-categories gracefully (treat as `Other`).
+categories gracefully.
+
+Category names beginning with `_` are free for custom use, like other ACP extension methods.
+Category names that do not begin with `_` are reserved for the ACP spec.
 
 **Type:** Union
 
@@ -3077,10 +3064,6 @@ categories gracefully (treat as `Other`).
 
 ## <span class="font-mono">SessionConfigSelect</span>
 
-**UNSTABLE**
-
-This capability is not part of the spec yet, and may be removed or changed at any point.
-
 A single-value selector (dropdown) session configuration option payload.
 
 **Type:** Object
@@ -3096,10 +3079,6 @@ A single-value selector (dropdown) session configuration option payload.
 </ResponseField>
 
 ## <span class="font-mono">SessionConfigSelectGroup</span>
-
-**UNSTABLE**
-
-This capability is not part of the spec yet, and may be removed or changed at any point.
 
 A group of possible values for a session configuration option.
 
@@ -3129,10 +3108,6 @@ A group of possible values for a session configuration option.
 
 ## <span class="font-mono">SessionConfigSelectOption</span>
 
-**UNSTABLE**
-
-This capability is not part of the spec yet, and may be removed or changed at any point.
-
 A possible value for a session configuration option.
 
 **Type:** Object
@@ -3161,27 +3136,19 @@ A possible value for a session configuration option.
 
 ## <span class="font-mono">SessionConfigSelectOptions</span>
 
-**UNSTABLE**
-
-This capability is not part of the spec yet, and may be removed or changed at any point.
-
 Possible values for a session configuration option.
 
 **Type:** Union
 
-<ResponseField name="array" type="array">
+<ResponseField name="Ungrouped" type="array">
   A flat list of options with no grouping.
 </ResponseField>
 
-<ResponseField name="array" type="array">
+<ResponseField name="Grouped" type="array">
   A list of options grouped under headers.
 </ResponseField>
 
 ## <span class="font-mono">SessionConfigValueId</span>
-
-**UNSTABLE**
-
-This capability is not part of the spec yet, and may be removed or changed at any point.
 
 Unique identifier for a session configuration option value.
 
@@ -3642,10 +3609,6 @@ See protocol docs: [Agent Reports Output](https://agentclientprotocol.com/protoc
 </ResponseField>
 
 <ResponseField name="config_option_update" type="object">
-  **UNSTABLE**
-
-  This capability is not part of the spec yet, and may be removed or changed at any point.
-
   Session configuration options have been updated.
 
   <Expandable title="Properties">
@@ -3685,6 +3648,42 @@ See protocol docs: [Agent Reports Output](https://agentclientprotocol.com/protoc
 
     <ResponseField name="updatedAt" type={"string | null"}>
       ISO 8601 timestamp of last activity. Set to null to clear.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="usage_update" type="object">
+  **UNSTABLE**
+
+  This capability is not part of the spec yet, and may be removed or changed at any point.
+
+  Context window and cost update for the session.
+
+  <Expandable title="Properties">
+    <ResponseField name="_meta" type={"object | null"}>
+      The \_meta property is reserved by ACP to allow clients and agents to attach additional
+      metadata to their interactions. Implementations MUST NOT make assumptions about values at
+      these keys.
+
+      See protocol docs: [Extensibility](https://agentclientprotocol.com/protocol/extensibility)
+    </ResponseField>
+
+    <ResponseField name="cost" type={<><span><a href="#cost">Cost</a></span><span> | null</span></>}>
+      Cumulative session cost (optional).
+    </ResponseField>
+
+    <ResponseField name="sessionUpdate" type={"string"} required />
+
+    <ResponseField name="size" type={"uint64"} required>
+      Total context window size in tokens.
+
+      * Minimum: `0`
+    </ResponseField>
+
+    <ResponseField name="used" type={"uint64"} required>
+      Tokens currently in context.
+
+      * Minimum: `0`
     </ResponseField>
   </Expandable>
 </ResponseField>
@@ -4139,7 +4138,86 @@ All text that was typed after the command name is provided as input.
   A hint to display when the input hasn't been provided yet
 </ResponseField>
 
+## <span class="font-mono">Usage</span>
 
----
+**UNSTABLE**
 
-> To find navigation and other pages in this documentation, fetch the llms.txt file at: https://agentclientprotocol.com/llms.txt
+This capability is not part of the spec yet, and may be removed or changed at any point.
+
+Token usage information for a prompt turn.
+
+**Type:** Object
+
+**Properties:**
+
+<ResponseField name="cachedReadTokens" type={"integer | null"}>
+  Total cache read tokens.
+
+  * Minimum: `0`
+</ResponseField>
+
+<ResponseField name="cachedWriteTokens" type={"integer | null"}>
+  Total cache write tokens.
+
+  * Minimum: `0`
+</ResponseField>
+
+<ResponseField name="inputTokens" type={"uint64"} required>
+  Total input tokens across all turns.
+
+  * Minimum: `0`
+</ResponseField>
+
+<ResponseField name="outputTokens" type={"uint64"} required>
+  Total output tokens across all turns.
+
+  * Minimum: `0`
+</ResponseField>
+
+<ResponseField name="thoughtTokens" type={"integer | null"}>
+  Total thought/reasoning tokens
+
+  * Minimum: `0`
+</ResponseField>
+
+<ResponseField name="totalTokens" type={"uint64"} required>
+  Sum of all token types across session.
+
+  * Minimum: `0`
+</ResponseField>
+
+## <span class="font-mono">UsageUpdate</span>
+
+**UNSTABLE**
+
+This capability is not part of the spec yet, and may be removed or changed at any point.
+
+Context window and cost update for a session.
+
+**Type:** Object
+
+**Properties:**
+
+<ResponseField name="_meta" type={"object | null"}>
+  The \_meta property is reserved by ACP to allow clients and agents to attach additional
+  metadata to their interactions. Implementations MUST NOT make assumptions about values at
+  these keys.
+
+  See protocol docs: [Extensibility](https://agentclientprotocol.com/protocol/extensibility)
+</ResponseField>
+
+<ResponseField name="cost" type={<><span><a href="#cost">Cost</a></span><span> | null</span></>}>
+  Cumulative session cost (optional).
+</ResponseField>
+
+<ResponseField name="size" type={"uint64"} required>
+  Total context window size in tokens.
+
+  * Minimum: `0`
+</ResponseField>
+
+<ResponseField name="used" type={"uint64"} required>
+  Tokens currently in context.
+
+  * Minimum: `0`
+</ResponseField>

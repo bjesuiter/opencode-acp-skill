@@ -1,3 +1,7 @@
+> ## Documentation Index
+> Fetch the complete documentation index at: https://agentclientprotocol.com/llms.txt
+> Use this file to discover all available pages before exploring further.
+
 # Prompt Turn
 
 > Understanding the core conversation flow
@@ -315,8 +319,3 @@ The Client **SHOULD** still accept tool call updates received after sending `ses
 ***
 
 Once a prompt turn completes, the Client may send another `session/prompt` to continue the conversation, building on the context established in previous turns.
-
-
----
-
-> To find navigation and other pages in this documentation, fetch the llms.txt file at: https://agentclientprotocol.com/llms.txt
