@@ -3,6 +3,8 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "typecheck": "tsc --noEmit",
+    "download-docs": "bun run scripts/download-acp-docs.bun.ts",
     "clawdbot": "CLAWDBOT_GATEWAY_TOKEN=ffd5ab740ee362e59360bde40cf04cc881ac2ac28920e360 clawdbot",
     "onboard": "bun clawdbot --dev onboard",
     "conf": "bun clawdbot --dev config",
