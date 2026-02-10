@@ -59,7 +59,17 @@ Clawdbot
 
 - **Local**: `processSessionId` identifies the background `opencode acp` process
 - **Remote**: `connectionId` (or handle) identifies the open channel to the remote ACP server
-- **ACP sessionId**: Identifies the conversation within that OpenCode instance (same in both modes)
+- **ACP sessionId**: Identifies the conversation within that OpenCode instance (same in both modes). This is the **active session** for this connection and is reused for all prompts until the user explicitly changes it.
+
+### Session persistence
+
+**One active session per connection; reuse until the user changes it.**
+
+- Set the active session when establishing the connection or when the user asks to switch: either `session/new` (store returned sessionId) or `session/load` (user-provided or chosen session ID).
+- Use that **same** `acpSessionId` for every subsequent `session/prompt` and `session/cancel`. Do not call `session/new` again for each prompt.
+- Change the active session only when the user explicitly asks for a new session or to resume/switch to another (then call `session/new` or `session/load` again and store the new ID).
+
+This way the user can specify a session for the ACP connection and have it used persistently until they change it.
 
 ### Lifecycle
 
@@ -254,7 +264,7 @@ Clawdbot must track per OpenCode connection (local or remote):
 |-------|-------------|---------|------|
 | `processSessionId` | Clawdbot's background process ID (local only) | `"bg_12345"` | Local |
 | `connectionId` | Handle from connect tool (remote only) | `"conn_1"` | Remote |
-| `acpSessionId` | OpenCode's session ID | `"sess_abc123"` | Both |
+| `acpSessionId` | **Active** OpenCode session ID (persistent until user changes it) | `"sess_abc123"` | Both |
 | `messageIdCounter` | JSON-RPC request ID | `3` | Both |
 | `cwd` | Working directory | `"/home/user/project"` | Both |
 | `initialized` | Whether initialize handshake done | `true` | Both |
@@ -305,6 +315,9 @@ Clawdbot must track per OpenCode connection (local or remote):
 7. LOOP: process.poll(sessionId: "bg_001") every 2 seconds
    -> collect session/update notifications
    -> until stopReason received
+
+8. (Later prompts) Use the SAME acpSessionId for every session/prompt.
+   Do NOT call session/new again. Only call session/new or session/load when user asks for a new session or to switch.
 ```
 
 ### Workflow 2: Check Status of Running Session
@@ -348,7 +361,7 @@ Clawdbot must track per OpenCode connection (local or remote):
 
 - [x] **Remote ACP** – connect to an ACP server on another host (same JSON-RPC, different transport)
 - [ ] Continuous polling option for real-time streaming
-- [ ] Session persistence (save/load ACP sessionId)
+- [x] **Session persistence** – one active session per ACP connection; reused for all prompts until the user explicitly changes it (new session or load another)
 - [ ] MCP server passthrough (connect clawdbot's MCPs to OpenCode)
 - [ ] Permission request handling (`session/request_permission`)
 - [ ] Mode switching (`session/set_mode`)
