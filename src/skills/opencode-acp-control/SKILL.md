@@ -1,21 +1,19 @@
 ---
 name: opencode-acp-control
-description: Control OpenCode via the Agent Client Protocol (ACP)—locally (opencode acp process) or remotely (connect to an ACP server on another host). Start sessions, send prompts, resume conversations, and manage OpenCode updates.
-metadata: {"version": "1.2.0", "author": "Benjamin Jesuiter <bjesuiter@gmail.com>", "license": "MIT", "github_url": "https://github.com/bjesuiter/opencode-acp-skill"}
+description: Control OpenCode locally via ACP (opencode acp process) or remotely via the OpenCode REST API (opencode serve on another host). Start sessions, send prompts, resume conversations, and manage OpenCode updates.
+metadata: {"version": "1.3.0", "author": "Benjamin Jesuiter <bjesuiter@gmail.com>", "license": "MIT", "github_url": "https://github.com/bjesuiter/opencode-acp-skill"}
 ---
 
 # OpenCode ACP Skill
 
-Control OpenCode directly via the Agent Client Protocol (ACP). You can use OpenCode **locally** (start a process on this machine) or **remotely** (connect to an ACP server on another host).
+Control OpenCode locally via the Agent Client Protocol (ACP) or remotely via the OpenCode REST API. You can use OpenCode **locally** (start a process on this machine) or **remotely** (talk to an OpenCode server on another host over HTTP).
 
 ## Connection Modes
 
 | Mode | When to use |
 |------|-------------|
-| **Local** | User wants OpenCode to run on the same machine. You start `opencode acp` via bash and talk to it via the process tool (stdin/stdout). |
-| **Remote** | User provides a URL or host:port of an already-running OpenCode ACP server (e.g. on another machine or in the cloud). You connect to it with a bidirectional channel and send the same JSON-RPC messages. |
-
-After the connection is established, the protocol is identical: initialize → session/new or session/load → session/prompt, same message format and polling.
+| **Local** | User wants OpenCode to run on the same machine. You start `opencode acp` via bash and talk to it via the process tool (stdin/stdout, JSON-RPC). |
+| **Remote** | User provides the base URL of an already-running OpenCode server (e.g. `http://remote-host:4096`). The server is started with `opencode serve`. You use HTTP requests to the REST API—**different protocol** than local ACP. See [OpenCode Server docs](https://opencode.ai/docs/de/server/). |
 
 ## Metadata
 
@@ -38,16 +36,18 @@ After the connection is established, the protocol is identical: initialize → s
 | **Active session (persistent)** | Use the same `opencodeSessionId` for all prompts until the user asks for a new session or to switch/resume another. Do not call `session/new` again for each prompt. |
 | Check version | `bash(command: "opencode --version")` |
 
-### Remote mode (ACP server on another host)
+### Remote mode (OpenCode REST API – `opencode serve` on another host)
 
 | Action | How |
 |--------|-----|
-| Connect to remote | Use the tool that opens a bidirectional channel (e.g. WebSocket or TCP) to the user-provided URL or host:port. Same JSON-RPC messages, newline-delimited. |
-| Send message | Write JSON-RPC line(s) to the channel (e.g. `connection.write(data: "<json-rpc>\n")`). |
-| Read response | Read from the channel (e.g. poll or stream). Parse newline-delimited JSON; same polling strategy as local. |
-| Disconnect | Close the connection when the user is done (no process to kill). |
-| List sessions | Not available via CLI on remote; use `session/load` with a known session ID if the user has one. |
-| **Active session (persistent)** | Same as local: use one `opencodeSessionId` for all prompts until the user changes it (new session or load another). |
+| Base URL | User provides e.g. `http://remote-host:4096`. Server started with `opencode serve [--port 4096] [--hostname 0.0.0.0]`. |
+| **Auth (optional)** | Ask the user: "Does the server require HTTP Basic Auth?" If yes, ask for username (default: `opencode`) and password. Include `Authorization: Basic <base64(user:pass)>` in all requests. If no, omit auth. **Not required.** |
+| List sessions | `GET {baseUrl}/session` → returns array of sessions. |
+| Create session | `POST {baseUrl}/session` body `{}` or `{ title: "..." }` → returns session with `id`. |
+| Send message | `POST {baseUrl}/session/{id}/message` body `{ parts: [{ type: "text", text: "..." }] }` → **waits for response** in HTTP body (no polling). |
+| Abort | `POST {baseUrl}/session/{id}/abort`. |
+| **Active session (persistent)** | Same as local: use one session ID for all messages until the user changes it. |
+| **OpenAPI spec** | `{baseUrl}/doc` (e.g. `http://remote-host:4096/doc`) – full request/response schemas. |
 
 ## Starting OpenCode (local)
 
@@ -61,27 +61,32 @@ bash(
 
 Save the returned `sessionId` (use it as the target for `process.write` and `process.poll`). You'll need it for all subsequent commands.
 
-## Connecting to a remote ACP server
+## Connecting to a remote OpenCode server (REST API)
 
-When the user wants to use an OpenCode ACP server that is already running on another host (e.g. `ws://remote-host:4096` or `tcp://remote-host:4096`):
+When the user wants to use an OpenCode server already running on another host (started with `opencode serve`):
 
-1. **Establish the connection**  
-   Use the tool that can open a **bidirectional** channel to the given URL or host:port (e.g. WebSocket client or TCP socket). The remote server must speak the same ACP protocol: newline-delimited JSON-RPC 2.0.
+1. **Base URL**  
+   User provides the server URL, e.g. `http://remote-host:4096` (default port 4096). Server options: `opencode serve [--port 4096] [--hostname 0.0.0.0]`.
 
-2. **Same protocol from here on**  
-   Once connected, send and receive the same messages as in local mode:
-   - Send `initialize`, then wait for the response.
-   - Send `session/new` (with `cwd` and `mcpServers`) or `session/load` (with existing `sessionId`, `cwd`, `mcpServers`).
-   - Send `session/prompt`, then read until you get a response with `stopReason`.
-   - Use `session/cancel` to cancel if needed.
+2. **Authentication (optional)**  
+   **Ask the user:** "Does the OpenCode server require HTTP Basic Auth?"  
+   - If **no** (or user doesn't know): omit authentication.  
+   - If **yes**: ask for username (default: `opencode`) and password. Add header `Authorization: Basic <base64(username:password)>` to every HTTP request. Basic Auth is **optional**, not required.
 
-3. **State to track (remote)**  
-   - `connectionId` or handle from your connect tool (instead of process sessionId).
-   - `opencodeSessionId` from `session/new` or the ID used in `session/load`.
-   - `messageId` – increment for each request.
+3. **REST API workflow** (not ACP; different protocol):
+   - **List sessions:** `GET {baseUrl}/session` → returns `[{ id, title, ... }, ...]`.
+   - **Create session:** `POST {baseUrl}/session` body `{}` or `{ title: "..." }` → returns `{ id, ... }`. Store `id` as active session.
+   - **Use existing session:** If user gives a session ID or picks from list, use that ID as active session.
+   - **Send prompt:** `POST {baseUrl}/session/{id}/message` body `{ parts: [{ type: "text", text: "Your question here" }] }` → response is in the HTTP body; no polling.
+   - **Abort:** `POST {baseUrl}/session/{id}/abort`.
 
-4. **Ending**  
-   When the user is done, close the connection (no process to kill). List sessions and version check are typically not available for remote; only what the ACP channel provides.
+4. **State to track (remote)**  
+   - `baseUrl` – server URL.
+   - `activeSessionId` – session ID (from POST /session or user choice). Reuse until user changes it.
+   - Auth credentials (only if user said server requires Basic Auth).
+
+5. **OpenAPI spec**  
+   The server publishes the OpenAPI 3.1 specification at **`{baseUrl}/doc`** (e.g. `http://remote-host:4096/doc`). Use this for full request/response schemas. Reference: [OpenCode Server docs](https://opencode.ai/docs/de/server/).
 
 ## Protocol Basics
 
@@ -141,10 +146,15 @@ No response expected - this is a notification.
 
 ## State to Track
 
-Per OpenCode connection (local or remote), track:
-- **Local**: `processSessionId` – from bash tool (clawdbot's process ID). **Remote**: `connectionId` or handle from the connect tool.
-- **`opencodeSessionId` (active session)** – The ACP session currently in use. Set once by `session/new` or `session/load`, then **reuse for all prompts** until the user asks to start a new session or to switch/resume a different one. Do not call `session/new` again for each prompt.
-- `messageId` – increment for each request you send.
+**Local (ACP):**
+- `processSessionId` – from bash tool.
+- `opencodeSessionId` (active session) – from `session/new` or `session/load`; reuse until user changes it.
+- `messageId` – increment for each JSON-RPC request.
+
+**Remote (REST API):**
+- `baseUrl` – server URL (e.g. `http://remote-host:4096`).
+- `activeSessionId` – session ID from `POST /session` or user choice; reuse until user changes it.
+- `authHeader` (optional) – `Authorization: Basic ...` only if user said server requires Basic Auth.
 
 ## Session persistence
 
@@ -180,8 +190,8 @@ If the user says they want to "use session X for this connection" or "always use
 | Empty poll response | Keep polling - agent is thinking |
 | Parse error | Skip malformed line, continue |
 | **Local**: Process exited | Restart OpenCode (bash again). |
-| **Remote**: Connection closed or error | Notify user; they may need to reconnect or restart the remote server. |
-| No response after 5min | **Local**: Kill process, start fresh. **Remote**: Close connection, notify user. |
+| **Remote**: HTTP error or connection failed | Check baseUrl, auth if required. Notify user to verify server is running (`opencode serve`). |
+| No response after 5min | **Local**: Kill process, start fresh. **Remote**: Request likely timed out; notify user. |
 
 ## Example: Complete Interaction
 
@@ -204,22 +214,23 @@ If the user says they want to "use session X for this connection" or "always use
 6. When done: process.kill(sessionId: "bg_42")
 ```
 
-### Example: Remote connection
+### Example: Remote (REST API)
 
 ```
-1. connection = connect(url: "ws://remote-host:4096")   # or your environment's tool for WebSocket/TCP
-   -> connectionId: "conn_1"
+1. baseUrl = "http://remote-host:4096"
+   Ask user: "Does the server require HTTP Basic Auth?" 
+   If yes: authHeader = "Authorization: Basic " + base64(username + ":" + password)
 
-2. connection.write('{"jsonrpc":"2.0","id":0,"method":"initialize",...}\n')
-   connection.read() or poll() -> initialize response
+2. GET {baseUrl}/session  # optional: list sessions for user to choose
 
-3. connection.write('{"jsonrpc":"2.0","id":1,"method":"session/new","params":{"cwd":"/path/on/remote","mcpServers":[]}}\n')
-   connection.read() -> opencodeSessionId: "sess_xyz789"
+3. POST {baseUrl}/session  body: {}
+   -> { id: "ses_xyz789", ... }   # store as activeSessionId
 
-4. connection.write('{"jsonrpc":"2.0","id":2,"method":"session/prompt","params":{"sessionId":"sess_xyz789","prompt":[...]}}\n')
-   Poll/read every 2 sec until stopReason; collect session/update content.
+4. POST {baseUrl}/session/ses_xyz789/message  body: { parts: [{ type: "text", text: "List all TypeScript files" }] }
+   -> response in HTTP body (no polling)
 
-5. When done: connection.close()
+5. (Later prompts) POST {baseUrl}/session/ses_xyz789/message  with new parts
+   Use same session ID until user asks to switch.
 ```
 
 ---
@@ -228,11 +239,10 @@ If the user says they want to "use session X for this connection" or "always use
 
 Resume a previous OpenCode session by letting the user choose from available sessions.
 
-### Step 1: List Available Sessions
+**Local:** Use `bash(command: "opencode session list", ...)` then `session/load`.  
+**Remote:** Use `GET {baseUrl}/session` to list sessions; user picks one; use that `id` as the active session for `POST /session/{id}/message`. No separate "load" step—the session is already on the server.
 
-```
-bash(command: "opencode session list", workdir: "/path/to/project")
-```
+### Step 1: List Available Sessions (local)
 
 Example output:
 ```
