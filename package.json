@@ -18,7 +18,8 @@
   "devDependencies": {
     "@dotenvx/dotenvx": "^1.51.4",
     "@types/bun": "latest",
-    "clawdhub": "^0.2.0"
+    "clawdhub": "^0.2.0",
+    "typescript": "^5"
   },
   "peerDependencies": {
     "typescript": "^5"

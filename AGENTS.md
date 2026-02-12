@@ -295,6 +295,8 @@ chore: update dependencies
 bun run scripts/download-acp-docs.bun.ts
 ```
 
+For future doc updates: Check https://agentclientprotocol.com/llms.txt to find the current markdown sources or appropriate API if the site structure has changed.
+
 ---
 
 ## References

@@ -1,9 +1,11 @@
 #!/usr/bin/env bun
 /**
  * Downloads ACP documentation files relevant for implementing an ACP client in TypeScript.
- * Source: https://agentclientprotocol.com/llms.txt
  *
  * Usage: bun run scripts/download-acp-docs.bun.ts
+ *
+ * For future doc updates: Check https://agentclientprotocol.com/llms.txt to find the
+ * current markdown sources or appropriate API if the site structure has changed.
  */
 
 import { mkdir } from "node:fs/promises";
@@ -59,6 +61,13 @@ async function downloadFile(urlPath: string): Promise<void> {
   }
 
   const content = await response.text();
+
+  // Skip HTML - the ACP site may serve rendered HTML instead of raw markdown when structure changes
+  if (content.trimStart().startsWith("<!DOCTYPE") || content.trimStart().startsWith("<html")) {
+    console.log(`  ⚠ Skipped (got HTML, not markdown). Check https://agentclientprotocol.com/llms.txt for current doc structure.`);
+    return;
+  }
+
   await Bun.write(outputPath, content);
 
   console.log(`  ✓ Saved to: ${outputPath}`);
