@@ -1,3 +1,7 @@
+> ## Documentation Index
+> Fetch the complete documentation index at: https://agentclientprotocol.com/llms.txt
+> Use this file to discover all available pages before exploring further.
+
 # Tool Calls
 
 > How Agents report tool call execution
@@ -305,8 +309,3 @@ Tool calls can report file locations they're working with, enabling Clients to i
 <ParamField path="line" type="number">
   Optional line number within the file
 </ParamField>
-
-
----
-
-> To find navigation and other pages in this documentation, fetch the llms.txt file at: https://agentclientprotocol.com/llms.txt

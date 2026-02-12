@@ -1,6 +1,16 @@
+> ## Documentation Index
+> Fetch the complete documentation index at: https://agentclientprotocol.com/llms.txt
+> Use this file to discover all available pages before exploring further.
+
 # Session Modes
 
 > Switch between different agent operating modes
+
+<Note>
+  You can now use [Session Config Options](./session-config-options). Dedicated
+  session mode methods will be removed in a future version of the protocol.
+  Until then, you can offer both to clients for backwards compatibility.
+</Note>
 
 Agents can provide a set of modes they can operate in. Modes often affect the system prompts used, the availability of tools, and whether they request permission before running.
 
@@ -164,8 +174,3 @@ When an option is chosen, the tool runs, setting the mode and sending the `curre
 <Card icon="shield-check" horizontal href="./tool-calls#requesting-permission">
   Learn more about permission requests
 </Card>
-
-
----
-
-> To find navigation and other pages in this documentation, fetch the llms.txt file at: https://agentclientprotocol.com/llms.txt

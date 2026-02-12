@@ -1,12 +1,19 @@
 ---
 name: opencode-acp-control
-description: Control OpenCode directly via the Agent Client Protocol (ACP). Start sessions, send prompts, resume conversations, and manage OpenCode updates.
-metadata: {"version": "1.0.2", "author": "Benjamin Jesuiter <bjesuiter@gmail.com>", "license": "MIT", "github_url": "https://github.com/bjesuiter/opencode-acp-skill"}
+description: Control OpenCode locally via ACP (opencode acp process) or remotely via the OpenCode REST API (opencode serve on another host). Start sessions, send prompts, resume conversations, and manage OpenCode updates.
+metadata: {"version": "1.3.0", "author": "Benjamin Jesuiter <bjesuiter@gmail.com>", "license": "MIT", "github_url": "https://github.com/bjesuiter/opencode-acp-skill"}
 ---
 
 # OpenCode ACP Skill
 
-Control OpenCode directly via the Agent Client Protocol (ACP).
+Control OpenCode locally via the Agent Client Protocol (ACP) or remotely via the OpenCode REST API. You can use OpenCode **locally** (start a process on this machine) or **remotely** (talk to an OpenCode server on another host over HTTP).
+
+## Connection Modes
+
+| Mode | When to use |
+|------|-------------|
+| **Local** | User wants OpenCode to run on the same machine. You start `opencode acp` via bash and talk to it via the process tool (stdin/stdout, JSON-RPC). |
+| **Remote** | User provides the base URL of an already-running OpenCode server (e.g. `http://remote-host:4096`). The server is started with `opencode serve`. You use HTTP requests to the REST API—**different protocol** than local ACP. See [OpenCode Server docs](https://opencode.ai/docs/de/server/). |
 
 ## Metadata
 
@@ -16,6 +23,8 @@ Control OpenCode directly via the Agent Client Protocol (ACP).
 
 ## Quick Reference
 
+### Local mode (opencode acp process)
+
 | Action | How |
 |--------|-----|
 | Start OpenCode | `bash(command: "opencode acp --cwd /path/to/project", background: true)` |
@@ -24,9 +33,23 @@ Control OpenCode directly via the Agent Client Protocol (ACP).
 | Stop OpenCode | `process.kill(sessionId)` |
 | List sessions | `bash(command: "opencode session list", workdir: "...")` |
 | Resume session | List sessions → ask user → `session/load` |
+| **Active session (persistent)** | Use the same `opencodeSessionId` for all prompts until the user asks for a new session or to switch/resume another. Do not call `session/new` again for each prompt. |
 | Check version | `bash(command: "opencode --version")` |
 
-## Starting OpenCode
+### Remote mode (OpenCode REST API – `opencode serve` on another host)
+
+| Action | How |
+|--------|-----|
+| Base URL | User provides e.g. `http://remote-host:4096`. Server started with `opencode serve [--port 4096] [--hostname 0.0.0.0]`. |
+| **Auth (optional)** | Ask the user: "Does the server require HTTP Basic Auth?" If yes, ask for username (default: `opencode`) and password. Include `Authorization: Basic <base64(user:pass)>` in all requests. If no, omit auth. **Not required.** |
+| List sessions | `GET {baseUrl}/session` → returns array of sessions. |
+| Create session | `POST {baseUrl}/session` body `{}` or `{ title: "..." }` → returns session with `id`. |
+| Send message | `POST {baseUrl}/session/{id}/message` body `{ parts: [{ type: "text", text: "..." }] }` → **waits for response** in HTTP body (no polling). |
+| Abort | `POST {baseUrl}/session/{id}/abort`. |
+| **Active session (persistent)** | Same as local: use one session ID for all messages until the user changes it. |
+| **OpenAPI spec** | `{baseUrl}/doc` (e.g. `http://remote-host:4096/doc`) – full request/response schemas. |
+
+## Starting OpenCode (local)
 
 ```
 bash(
@@ -36,7 +59,34 @@ bash(
 )
 ```
 
-Save the returned `sessionId` - you'll need it for all subsequent commands.
+Save the returned `sessionId` (use it as the target for `process.write` and `process.poll`). You'll need it for all subsequent commands.
+
+## Connecting to a remote OpenCode server (REST API)
+
+When the user wants to use an OpenCode server already running on another host (started with `opencode serve`):
+
+1. **Base URL**  
+   User provides the server URL, e.g. `http://remote-host:4096` (default port 4096). Server options: `opencode serve [--port 4096] [--hostname 0.0.0.0]`.
+
+2. **Authentication (optional)**  
+   **Ask the user:** "Does the OpenCode server require HTTP Basic Auth?"  
+   - If **no** (or user doesn't know): omit authentication.  
+   - If **yes**: ask for username (default: `opencode`) and password. Add header `Authorization: Basic <base64(username:password)>` to every HTTP request. Basic Auth is **optional**, not required.
+
+3. **REST API workflow** (not ACP; different protocol):
+   - **List sessions:** `GET {baseUrl}/session` → returns `[{ id, title, ... }, ...]`.
+   - **Create session:** `POST {baseUrl}/session` body `{}` or `{ title: "..." }` → returns `{ id, ... }`. Store `id` as active session.
+   - **Use existing session:** If user gives a session ID or picks from list, use that ID as active session.
+   - **Send prompt:** `POST {baseUrl}/session/{id}/message` body `{ parts: [{ type: "text", text: "Your question here" }] }` → response is in the HTTP body; no polling.
+   - **Abort:** `POST {baseUrl}/session/{id}/abort`.
+
+4. **State to track (remote)**  
+   - `baseUrl` – server URL.
+   - `activeSessionId` – session ID (from POST /session or user choice). Reuse until user changes it.
+   - Auth credentials (only if user said server requires Basic Auth).
+
+5. **OpenAPI spec**  
+   The server publishes the OpenAPI 3.1 specification at **`{baseUrl}/doc`** (e.g. `http://remote-host:4096/doc`). Use this for full request/response schemas. Reference: [OpenCode Server docs](https://opencode.ai/docs/de/server/).
 
 ## Protocol Basics
 
@@ -56,13 +106,18 @@ Send immediately after starting OpenCode:
 
 Poll for response. Expect `result.protocolVersion: 1`.
 
-### Step 2: Create Session
+### Step 2: Create or choose a session (then keep using it)
+
+**Establish the active session once** (or when the user asks to change it):
+
+- **New session:** Send `session/new`, save `result.sessionId`. Use this ID for all subsequent prompts until the user changes session.
+- **Resume / use specific session:** If the user gives a session ID or chooses one from a list, send `session/load` with that ID (and `cwd`, `mcpServers`). Save that session ID as the active one.
 
 ```json
 {"jsonrpc":"2.0","id":1,"method":"session/new","params":{"cwd":"/path/to/project","mcpServers":[]}}
 ```
 
-Poll for response. Save `result.sessionId` (e.g., `"sess_abc123"`).
+Poll for response. Save `result.sessionId` (e.g., `"sess_abc123"`) as the **active session** for this connection. Use it for every `session/prompt` and `session/cancel` until the user explicitly asks for a new session or to switch to another.
 
 ### Step 3: Send Prompts
 
@@ -91,10 +146,27 @@ No response expected - this is a notification.
 
 ## State to Track
 
-Per OpenCode instance, track:
-- `processSessionId` - from bash tool (clawdbot's process ID)
-- `opencodeSessionId` - from session/new response (OpenCode's session ID)  
-- `messageId` - increment for each request you send
+**Local (ACP):**
+- `processSessionId` – from bash tool.
+- `opencodeSessionId` (active session) – from `session/new` or `session/load`; reuse until user changes it.
+- `messageId` – increment for each JSON-RPC request.
+
+**Remote (REST API):**
+- `baseUrl` – server URL (e.g. `http://remote-host:4096`).
+- `activeSessionId` – session ID from `POST /session` or user choice; reuse until user changes it.
+- `authHeader` (optional) – `Authorization: Basic ...` only if user said server requires Basic Auth.
+
+## Session persistence
+
+**One active session per ACP connection.** You decide which session is active when you establish the connection or when the user asks to change it. From then on, use that session for every prompt until the user explicitly changes it.
+
+- **Set the active session** (do this once, or when the user switches):
+  - User wants a **new** conversation → send `session/new`, store `result.sessionId`.
+  - User wants to **resume** or **use a specific session** (e.g. they give an ID or choose from a list) → send `session/load` with that ID (and `cwd`, `mcpServers`), then use that session ID as active.
+- **Use it persistently:** For every subsequent `session/prompt` and `session/cancel`, use the same stored `opencodeSessionId`. Do **not** call `session/new` again for each prompt.
+- **Change only when the user asks:** e.g. "start a new session", "switch to session X", "resume the other one". Then call `session/new` or `session/load` again and store the new ID.
+
+If the user says they want to "use session X for this connection" or "always use this session until I change it", treat that session as the active one and keep using it until they say otherwise.
 
 ## Polling Strategy
 
@@ -117,8 +189,9 @@ Per OpenCode instance, track:
 |-------|----------|
 | Empty poll response | Keep polling - agent is thinking |
 | Parse error | Skip malformed line, continue |
-| Process exited | Restart OpenCode |
-| No response after 5min | Kill process, start fresh |
+| **Local**: Process exited | Restart OpenCode (bash again). |
+| **Remote**: HTTP error or connection failed | Check baseUrl, auth if required. Notify user to verify server is running (`opencode serve`). |
+| No response after 5min | **Local**: Kill process, start fresh. **Remote**: Request likely timed out; notify user. |
 
 ## Example: Complete Interaction
 
@@ -141,17 +214,35 @@ Per OpenCode instance, track:
 6. When done: process.kill(sessionId: "bg_42")
 ```
 
+### Example: Remote (REST API)
+
+```
+1. baseUrl = "http://remote-host:4096"
+   Ask user: "Does the server require HTTP Basic Auth?" 
+   If yes: authHeader = "Authorization: Basic " + base64(username + ":" + password)
+
+2. GET {baseUrl}/session  # optional: list sessions for user to choose
+
+3. POST {baseUrl}/session  body: {}
+   -> { id: "ses_xyz789", ... }   # store as activeSessionId
+
+4. POST {baseUrl}/session/ses_xyz789/message  body: { parts: [{ type: "text", text: "List all TypeScript files" }] }
+   -> response in HTTP body (no polling)
+
+5. (Later prompts) POST {baseUrl}/session/ses_xyz789/message  with new parts
+   Use same session ID until user asks to switch.
+```
+
 ---
 
 ## Resume Session
 
 Resume a previous OpenCode session by letting the user choose from available sessions.
 
-### Step 1: List Available Sessions
+**Local:** Use `bash(command: "opencode session list", ...)` then `session/load`.  
+**Remote:** Use `GET {baseUrl}/session` to list sessions; user picks one; use that `id` as the active session for `POST /session/{id}/message`. No separate "load" step—the session is already on the server.
 
-```
-bash(command: "opencode session list", workdir: "/path/to/project")
-```
+### Step 1: List Available Sessions (local)
 
 Example output:
 ```
@@ -229,6 +320,7 @@ function resumeSession(workdir):
 - **History replay**: On load, all previous messages stream back
 - **Memory preserved**: Agent remembers the full conversation
 - **Process independent**: Sessions survive OpenCode restarts
+- **Becomes active session**: After `session/load`, use this session ID as the persistent active session for all following prompts until the user changes it (see Session persistence).
 
 ---
 
